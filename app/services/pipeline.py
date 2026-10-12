@@ -1,8 +1,10 @@
 """Coordinates idempotent analysis requests across Feishu and Dify."""
 
 import asyncio
+import hashlib
+import hmac
 
-from app.schemas import AnalysisOutput, PipelineResult
+from app.schemas import AnalysisOutput, PipelineResult, ScenarioDraft
 from app.services.dify import DifyClient, DifyError
 from app.services.feishu import FeishuClient, FeishuError, FeishuRecord
 from app.services.scenarios import ScenarioCatalog
@@ -26,8 +28,14 @@ class PipelineService:
         self.dify = dify
         self.scenarios = scenarios
 
-    async def submit(self, scenario_id: str, request_id: str) -> PipelineResult:
+    async def submit(
+        self, scenario_id: str, request_id: str, draft: ScenarioDraft | None = None,
+        request_token: str | None = None,
+    ) -> PipelineResult:
         scenario = self.scenarios.get(scenario_id)
+        if draft is not None:
+            scenario = draft.to_scenario(scenario_id)
+        token_digest = hashlib.sha256(request_token.encode()).hexdigest() if request_token else None
         loop = asyncio.get_running_loop()
         total_seconds = max(PIPELINE_TIMEOUT_SECONDS, 0.001)
         cleanup_seconds = min(PIPELINE_CLEANUP_SECONDS, total_seconds / 2)
@@ -41,7 +49,26 @@ class PipelineService:
                 token = await self.feishu.get_tenant_token()
                 record = await self.feishu.find_by_request_id(token, request_id)
                 if record is None:
-                    record = await self.feishu.create_processing_record(token, request_id, scenario)
+                    if token_digest is None:
+                        record = await self.feishu.create_processing_record(token, request_id, scenario)
+                    else:
+                        record = await self.feishu.create_processing_record(
+                            token, request_id, scenario, token_digest,
+                        )
+                elif record.request_token_digest is not None and (
+                    token_digest is None or not hmac.compare_digest(record.request_token_digest, token_digest)
+                ):
+                    raise PipelineError("record_access_denied")
+                elif record.request_token_digest is None and token_digest is not None:
+                    # Public historical request IDs cannot be upgraded into write access.
+                    raise PipelineError("record_access_denied")
+                if record.scenario is not None:
+                    exclude = {"id"} if record.scenario.id == "legacy" else set()
+                    if record.scenario.model_dump(exclude=exclude) != scenario.model_dump(exclude=exclude):
+                        raise PipelineError("request_content_conflict")
+                elif draft is not None:
+                    # A legacy record with no verifiable snapshot must not accept changed input.
+                    raise PipelineError("request_content_conflict")
 
                 if record.status == "completed":
                     if record.analysis is None:

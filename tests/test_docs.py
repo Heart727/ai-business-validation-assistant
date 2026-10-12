@@ -23,8 +23,8 @@ def test_readme_has_reproducible_safe_local_and_public_setup():
     assert "pytest" in readme
     assert "静态预览" in readme
     for screenshot in (
-        "live-demo-form.png", "live-demo-analysis.png", "live-demo-actions.png",
-        "feishu-demo-record.png",
+        "live-demo-form.png", "live-demo-analysis.png", "live-demo-tracking.png",
+        "live-demo-snapshot.png",
     ):
         assert f"docs/screenshots/{screenshot}" in readme
     assert "实时分析" in readme
@@ -80,7 +80,7 @@ def test_failure_guide_documents_input_output_recovery_and_limits():
         assert label in failures
     assert "流程" in case_study and "验证" in case_study
     assert "公开实时演示" in case_study
-    assert "10 样例验收" in case_study
+    assert "10 份真实集成验收" in read_project_file("README.md")
     assert "feishu_auth_failed` 仅表示租户令牌获取失败" in failures
     assert "feishu_update_failed` 无法确认最终记录状态" in failures
     assert "feishu_invalid_response` 用于飞书返回内容不可解析或结构不符" in failures
@@ -94,7 +94,7 @@ def test_vercel_entry_and_screenshots_are_present():
     assert (ROOT / "docs/screenshots/static-preview-desktop.png").is_file()
     assert (ROOT / "docs/screenshots/static-preview-mobile.png").is_file()
     for screenshot in (
-        "live-demo-form.png", "live-demo-analysis.png", "live-demo-actions.png",
-        "feishu-demo-record.png",
+        "live-demo-form.png", "live-demo-analysis.png", "live-demo-tracking.png",
+        "live-demo-snapshot.png",
     ):
         assert (ROOT / "docs/screenshots" / screenshot).is_file()

@@ -1,7 +1,9 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.services.input_guard import require_demo_text
 
 
 _OBSERVATION_LABELS = frozenset({"证据", "推断", "缺失信息"})
@@ -69,6 +71,7 @@ class PipelineResult(BaseModel):
     status: Literal["processing", "completed", "retryable_failed"]
     analysis: AnalysisOutput | None = None
     error_code: str | None = None
+    access_token: str | None = Field(default=None, repr=False)
 
     @model_validator(mode="after")
     def validate_state_payload(self):
@@ -83,8 +86,98 @@ class PipelineResult(BaseModel):
         return self
 
 
+class ScenarioDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=80)
+    industry: str = Field(min_length=1, max_length=60)
+    offering: str = Field(min_length=1, max_length=300)
+    target_customer: str = Field(min_length=1, max_length=300)
+    business_problem: str = Field(min_length=1, max_length=600)
+    current_metrics: str = Field(min_length=1, max_length=600)
+    budget_range: str = Field(min_length=1, max_length=100)
+    goal: str = Field(min_length=1, max_length=400)
+    time_limit: str = Field(min_length=1, max_length=100)
+    fictional_only: Literal[True]
+
+    @field_validator("fictional_only", mode="before")
+    @classmethod
+    def require_explicit_confirmation(cls, value):
+        if type(value) is not bool or value is not True:
+            raise ValueError("Explicit fictional-only confirmation required")
+        return value
+
+    @field_validator("title")
+    @classmethod
+    def require_fictional_title(cls, value):
+        if not value.startswith("虚构"):
+            raise ValueError("Title must identify the fictional sample")
+        return value
+
+    @field_validator(
+        "title", "industry", "offering", "target_customer", "business_problem",
+        "current_metrics", "budget_range", "goal", "time_limit",
+    )
+    @classmethod
+    def screen_demo_fields(cls, value):
+        return require_demo_text(value)
+
+    def to_scenario(self, scenario_id: str) -> Scenario:
+        return Scenario(id=scenario_id, **self.model_dump(exclude={"fictional_only"}))
+
+
 class ScenarioRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     scenario_id: str = Field(min_length=1, max_length=80)
     request_id: UUID
+    draft: ScenarioDraft | None = None
+    request_token: UUID | None = Field(default=None, repr=False)
+
+    @model_validator(mode="after")
+    def edited_draft_requires_request_token(self):
+        if self.draft is not None and self.request_token is None:
+            raise ValueError("Edited drafts require a private recovery nonce")
+        return self
+
+
+class DayExecutionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    day: int = Field(ge=1, le=7, strict=True)
+    status: Literal["pending", "completed", "skipped"]
+    observed_metric: str = Field(default="", max_length=400)
+    conclusion: str = Field(default="", max_length=400)
+
+    @field_validator("observed_metric", "conclusion")
+    @classmethod
+    def screen_demo_fields(cls, value):
+        return require_demo_text(value)
+
+    @model_validator(mode="after")
+    def completed_requires_evidence(self):
+        if self.status == "completed" and (not self.observed_metric or not self.conclusion):
+            raise ValueError("Completed execution requires a metric and conclusion")
+        return self
+
+
+class DayExecution(DayExecutionInput):
+    updated_at: str
+
+
+class RecordAccess(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: UUID
+    access_token: str = Field(min_length=1, max_length=128, repr=False)
+
+
+class ExecutionRequest(RecordAccess):
+    execution: DayExecutionInput
+
+
+class RecordDetails(BaseModel):
+    request_id: str
+    scenario: Scenario | None
+    analysis: AnalysisOutput
+    executions: list[DayExecution]

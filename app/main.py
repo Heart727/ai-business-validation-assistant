@@ -4,14 +4,16 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from app.config import Settings
-from app.schemas import AnalysisOutput, PipelineResult, ScenarioRequest
+from app.schemas import AnalysisOutput, ExecutionRequest, PipelineResult, RecordAccess, RecordDetails, ScenarioDraft, ScenarioRequest
 from app.services.pipeline import PipelineError, PipelineService
 from app.services.scenarios import ScenarioCatalog, UnknownScenario
+from app.services.tracking import TrackingService
 
 
 _PUBLIC_PIPELINE_CODES = frozenset({
@@ -22,6 +24,10 @@ _PUBLIC_PIPELINE_CODES = frozenset({
     "feishu_invalid_response",
     "feishu_duplicate_request_id",
     "pipeline_timeout",
+    "request_content_conflict",
+    "record_access_denied",
+    "record_not_found",
+    "record_not_completed",
 })
 
 
@@ -31,6 +37,30 @@ def create_app(
     scenarios: ScenarioCatalog,
 ) -> FastAPI:
     app = FastAPI(title="AI 经营分析与 7 天验证助手", version="0.1.0")
+    tracking = TrackingService(settings, getattr(pipeline, "feishu", None))
+
+    @app.exception_handler(RequestValidationError)
+    async def safe_validation_error(request, error):
+        # Never echo rejected input (contacts, secrets or recovery tokens).
+        allowed = set(ScenarioRequest.model_fields) | set(ScenarioDraft.model_fields) | {
+            "execution", "day", "status", "observed_metric", "conclusion", "access_token",
+        }
+        fields = sorted({
+            ".".join(str(part) for part in item["loc"][1:] if str(part) in allowed)
+            for item in error.errors()
+        } - {""})
+        return JSONResponse(status_code=422, content={
+            "detail": {"code": "invalid_input", "fields": fields},
+        })
+
+    def public_error(error: PipelineError):
+        code = error.code if error.code in _PUBLIC_PIPELINE_CODES else "service_unavailable"
+        status = {
+            "feishu_duplicate_request_id": 409, "request_content_conflict": 409,
+            "record_access_denied": 403, "record_not_found": 404,
+            "record_not_completed": 409, "pipeline_timeout": 504,
+        }.get(code, 503)
+        return HTTPException(status_code=status, detail={"code": code})
     preview_path = Path(__file__).resolve().parent.parent / "data" / "example_analysis.json"
     try:
         preview_data = json.loads(preview_path.read_text(encoding="utf-8"))
@@ -61,16 +91,20 @@ def create_app(
             raise HTTPException(status_code=503, detail={"code": "demo_disabled"})
 
         try:
-            return await pipeline.submit(body.scenario_id, str(body.request_id))
+            if body.draft is None and body.request_token is None:
+                result = await pipeline.submit(body.scenario_id, str(body.request_id))
+            else:
+                result = await pipeline.submit(
+                    body.scenario_id, str(body.request_id), body.draft,
+                    str(body.request_token) if body.request_token else None,
+                )
+            if result.status == "completed" and body.request_token is not None:
+                result = result.model_copy(update={"access_token": tracking.issue_token(str(body.request_id))})
+            return result
         except UnknownScenario:
             raise HTTPException(status_code=400, detail={"code": "unknown_scenario"}) from None
         except PipelineError as error:
-            code = error.code if error.code in _PUBLIC_PIPELINE_CODES else "service_unavailable"
-            status = {
-                "feishu_duplicate_request_id": 409,
-                "pipeline_timeout": 504,
-            }.get(code, 503)
-            raise HTTPException(status_code=status, detail={"code": code}) from None
+            raise public_error(error) from None
 
     @app.post("/api/analyze", response_model=PipelineResult)
     async def analyze(body: ScenarioRequest) -> PipelineResult:
@@ -79,6 +113,24 @@ def create_app(
     @app.post("/api/retry", response_model=PipelineResult)
     async def retry(body: ScenarioRequest) -> PipelineResult:
         return await submit(body)
+
+    async def record_operation(body: RecordAccess, execution=None):
+        if not settings.live_demo_ready:
+            raise HTTPException(status_code=503, detail={"code": "demo_disabled"})
+        try:
+            if execution is None:
+                return await tracking.get_record(str(body.request_id), body.access_token)
+            return await tracking.save_execution(str(body.request_id), body.access_token, execution)
+        except PipelineError as error:
+            raise public_error(error) from None
+
+    @app.post("/api/record", response_model=RecordDetails)
+    async def get_record(body: RecordAccess) -> RecordDetails:
+        return await record_operation(body)
+
+    @app.post("/api/actions", response_model=RecordDetails)
+    async def save_action(body: ExecutionRequest) -> RecordDetails:
+        return await record_operation(body, body.execution)
 
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 

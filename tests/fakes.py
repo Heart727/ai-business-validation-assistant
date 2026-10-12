@@ -1,6 +1,8 @@
 """Deterministic in-memory integrations for tests and local acceptance checks."""
 
-from app.schemas import AnalysisOutput, DayAction, Scenario
+import json
+
+from app.schemas import AnalysisOutput, DayAction, DayExecution, Scenario
 from app.services.dify import DifyError
 from app.services.feishu import FeishuError, FeishuRecord
 
@@ -32,33 +34,44 @@ class InMemoryFeishu:
         return self.records.get(request_id)
 
     async def create_processing_record(
-        self, token: str, request_id: str, scenario: Scenario
+        self, token: str, request_id: str, scenario: Scenario,
+        request_token_digest: str | None = None,
     ) -> FeishuRecord:
         assert token == "mock-tenant-token"
         self.events.append("create")
         self._raise_next_failure("create")
         self.create_count += 1
-        record = FeishuRecord(f"mock-rec-{self.create_count}", request_id, "processing")
+        record = FeishuRecord(
+            f"mock-rec-{self.create_count}", request_id, "processing",
+            scenario=scenario, request_token_digest=request_token_digest,
+        )
         self.records[request_id] = record
         return record
 
     async def update_record(self, token: str, record_id: str, fields: dict[str, object]) -> None:
         assert token == "mock-tenant-token"
-        self.events.append(f"update:{fields['处理状态']}")
+        self.events.append(f"update:{fields.get('处理状态', 'execution')}")
         self._raise_next_failure("update")
         request_id, record = next(
             (key, value) for key, value in self.records.items() if value.record_id == record_id
         )
         analysis = record.analysis
-        if fields["处理状态"] == "completed":
+        if fields.get("处理状态") == "completed":
             analysis = AnalysisOutput.model_validate({
                 "executive_summary": fields["经营摘要"],
                 "observations": fields["关键观察"],
                 "risks": fields["风险"],
                 "seven_day_actions": fields["7天验证动作"],
             })
+        executions = {item.day: item for item in record.executions}
+        for day in range(1, 8):
+            key = f"第{day}天执行记录"
+            if key in fields:
+                executions[day] = DayExecution.model_validate_json(fields[key])
         self.records[request_id] = FeishuRecord(
-            record_id, request_id, fields["处理状态"], analysis
+            record_id, request_id, fields.get("处理状态", record.status), analysis,
+            record.scenario, [executions[day] for day in sorted(executions)],
+            record.request_token_digest,
         )
 
 

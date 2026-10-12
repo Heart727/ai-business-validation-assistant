@@ -44,12 +44,14 @@ async def test_create_uses_configured_table_and_fixed_scenario_fields(settings, 
             "目标": scenario.goal, "时间限制": scenario.time_limit,
             "处理状态": "processing", "经营摘要": "", "关键观察": "[]",
             "风险": "[]", "7天验证动作": "[]", "错误码": "",
+            "资料快照": scenario.model_dump_json(),
         }
         return httpx.Response(200, json={"code": 0, "data": {"record": {"record_id": "rec-1", "fields": fields}}})
 
     async with mock_client(handler) as http_client:
         record = await FeishuClient(settings, http_client).create_processing_record(TOKEN, REQUEST_ID, scenario)
     assert (record.record_id, record.request_id, record.status, record.analysis) == ("rec-1", REQUEST_ID, "processing", None)
+    assert record.scenario == scenario
 
 
 @pytest.mark.asyncio

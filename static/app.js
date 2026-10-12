@@ -11,6 +11,13 @@ const state = {
   working: false,
 };
 const STORAGE_KEY = "validation-demo.pending-request";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DRAFT_FIELDS = {
+  title: ["样例名称", 80], industry: ["所属行业", 60], offering: ["产品或服务", 300],
+  target_customer: ["目标客群", 300], business_problem: ["经营问题", 600],
+  current_metrics: ["当前指标", 600], budget_range: ["测试预算", 100],
+  goal: ["验证目标", 400], time_limit: ["验证时限", 100],
+};
 const ERROR_COPY = {
   demo_disabled: "实时服务尚未开放，当前展示的是固定离线示例。",
   feishu_auth_failed: "演示表暂时无法连接，请稍后重试。",
@@ -26,7 +33,12 @@ const ERROR_COPY = {
   dify_upstream_failed: "AI 服务暂时不可用，原请求可以安全重试。",
   service_unavailable: "演示服务暂时不可用，请稍后重试。",
   unknown_scenario: "未找到该样例，请重新选择列表中的固定样例。",
+  invalid_input: "资料未通过检查。请检查必填项、字数、虚构名称，以及是否含联系方式或密钥。",
+  rate_limited: "共享调用限额已用尽：分析/重试/恢复/保存合计每IP每10分钟5次。请等待限额窗口恢复（最长约 10 分钟）后，用原请求重试。",
+  request_content_conflict: "原请求与已保存的资料或凭证不一致，发生内容冲突。请结束本次请求，重新编辑后提交。",
+  record_access_denied: "本次请求的恢复凭证无效或已失效。请结束本次请求并重新提交虚构资料。",
 };
+let tracker;
 
 function makeNode(tagName, className, text) {
   const node = document.createElement(tagName);
@@ -66,7 +78,7 @@ function renderScenarioList() {
     number.setAttribute("aria-hidden", "true");
     const copy = makeNode("span", "scenario-copy");
     copy.append(makeNode("strong", "", scenario.title));
-    copy.append(makeNode("small", "", "固定资料 · 仅提交样例 ID"));
+    copy.append(makeNode("small", "", "虚构模板 · 可编辑资料"));
     const arrow = makeNode("span", "scenario-arrow", "↗");
     arrow.setAttribute("aria-hidden", "true");
     button.append(number, copy, arrow);
@@ -75,20 +87,21 @@ function renderScenarioList() {
   });
 }
 
-function renderSelectedScenario() {
+function renderSelectedScenario(draftOverride = null) {
   const scenario = getSelectedScenario();
   if (!scenario) return;
   byId("selected-industry").textContent = scenario.industry;
   byId("selected-title").textContent = scenario.title;
-  byId("selected-problem").textContent = scenario.business_problem;
-  byId("selected-metrics").textContent = scenario.current_metrics;
-  byId("selected-goal").textContent = scenario.goal;
-  byId("selected-budget").textContent = scenario.budget_range;
-  byId("result-eyebrow").textContent = "虚构经营样例 · 固定资料";
+  const draft = draftOverride || state.pending?.draft || scenario;
+  for (const field of Object.keys(DRAFT_FIELDS)) byId(`draft-${field}`).value = draft[field];
+  byId("fictional-only").checked = state.pending?.draft?.fictional_only === true;
+  clearIntakeFeedback();
+  setIntakeLock();
 }
 
 function selectScenario(scenarioId) {
   if (state.pending || state.working) return;
+  if (!state.scenarios.some((item) => item.id === scenarioId)) return;
   state.selectedScenarioId = scenarioId;
   renderScenarioList();
   renderSelectedScenario();
@@ -99,8 +112,75 @@ function selectScenario(scenarioId) {
       : `当前选择为「${getSelectedScenario()?.title || "虚构样例"}」；下方固定静态结果对应「${staticTitle}」，未针对当前选择重新生成。`;
     renderStaticPreview(note);
   } else {
-    showEmptyResult("此样例尚未运行实时分析。准备好后，可提交固定的虚构资料。", "运行实时分析");
+    showEmptyResult("此资料尚未运行实时分析。编辑虚构资料并确认后，即可提交。", "经营问题 · 待开始");
   }
+}
+
+function setIntakeLock() {
+  byId("intake-fields").disabled = state.working || Boolean(state.pending) || !getSelectedScenario();
+}
+
+function clearIntakeFeedback() {
+  byId("intake-feedback").textContent = "";
+  for (const field of [...Object.keys(DRAFT_FIELDS), "fictional_only"]) {
+    const input = byId(field === "fictional_only" ? "fictional-only" : `draft-${field}`);
+    input.removeAttribute("aria-invalid");
+  }
+}
+
+function intakeError(message, fields = []) {
+  byId("intake-feedback").textContent = message;
+  for (const field of fields) {
+    const input = byId(field === "fictional_only" ? "fictional-only" : `draft-${field}`);
+    if (input) input.setAttribute("aria-invalid", "true");
+  }
+  setStatus(message, "error");
+}
+
+function isValidDraft(draft) {
+  return draft && typeof draft === "object" && draft.fictional_only === true
+    && Object.keys(draft).length === Object.keys(DRAFT_FIELDS).length + 1
+    && Object.entries(DRAFT_FIELDS).every(([field, [, limit]]) =>
+      typeof draft[field] === "string" && draft[field].trim().length > 0 && draft[field].length <= limit)
+    && draft.title.startsWith("虚构");
+}
+
+function readDraft() {
+  clearIntakeFeedback();
+  const draft = {};
+  const invalid = [];
+  for (const [field, [, limit]] of Object.entries(DRAFT_FIELDS)) {
+    draft[field] = byId(`draft-${field}`).value.trim();
+    if (!draft[field] || draft[field].length > limit) invalid.push(field);
+  }
+  if (!draft.title.startsWith("虚构") && !invalid.includes("title")) invalid.push("title");
+  draft.fictional_only = byId("fictional-only").checked;
+  if (invalid.length) {
+    intakeError(`请检查：${invalid.map((field) => DRAFT_FIELDS[field][0]).join("、")}。全部必填，请遵守字数限制；样例名称须以「虚构」开头。`, invalid);
+    return null;
+  }
+  if (!draft.fictional_only) {
+    intakeError("请先确认资料全部为虚构，不含真实个人信息、联系方式或密钥。", ["fictional_only"]);
+    return null;
+  }
+  if (!byId("intake-form").reportValidity()) return null;
+  return draft;
+}
+
+function freezePending(value) {
+  if (value.draft) Object.freeze(value.draft);
+  return Object.freeze(value);
+}
+
+function startAnalysis() {
+  if (!state.liveEnabled || state.working || state.pending || !getSelectedScenario()) return;
+  const draft = readDraft();
+  if (!draft) return;
+  state.pending = freezePending({
+    scenarioId: state.selectedScenarioId, requestId: newRequestId(), requestToken: newRequestId(), draft,
+  });
+  savePending();
+  return submitPending("/api/analyze");
 }
 
 function renderObservationCards(observations) {
@@ -118,8 +198,7 @@ function renderObservationCards(observations) {
   return grid;
 }
 
-function renderAnalysis(analysis) {
-  const content = byId("result-content");
+function renderAnalysis(analysis, content = byId("result-content")) {
   content.replaceChildren();
 
   const summary = makeNode("section", "summary-block");
@@ -164,6 +243,7 @@ function showEmptyResult(message, eyebrow) {
   setBadge("实时分析已就绪", "live");
   byId("result-title").textContent = "一周验证计划";
   byId("result-eyebrow").textContent = eyebrow || "经营问题 · 待开始";
+  byId("result-request-id").hidden = true;
   setStatus(message);
   byId("result-content").replaceChildren(
     makeNode("div", "result-empty", "提交后会生成经营摘要、证据与推断，以及逐日行动、记录指标和判断规则。")
@@ -175,6 +255,7 @@ function renderStaticPreview(message) {
   setBadge("静态预览 · 未实时执行", "static");
   byId("result-title").textContent = state.staticScenario?.title || "固定静态示例";
   byId("result-eyebrow").textContent = "离线示例 · 非实时 AI 结果";
+  byId("result-request-id").hidden = true;
   setStatus(message, "info");
   renderAnalysis(state.preview);
 }
@@ -192,6 +273,7 @@ function clearPending() {
   byId("run-button").hidden = false;
   byId("run-button").disabled = !state.liveEnabled;
   byId("run-button").textContent = state.liveEnabled ? "运行实时分析 ↗" : "实时演示尚未启用";
+  setIntakeLock();
 }
 
 function savePending() {
@@ -203,11 +285,20 @@ function savePending() {
 }
 
 function restorePending() {
+  // A catalog outage must not delete the private snapshot needed for recovery.
+  if (state.scenarios.length === 0) return;
   try {
     const value = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-    if (value && typeof value.requestId === "string" && state.scenarios.some((item) => item.id === value.scenarioId)) {
-      state.pending = value;
+    if (value && UUID_PATTERN.test(value.requestId)
+      && state.scenarios.some((item) => item.id === value.scenarioId)
+      && (value.draft === undefined || (isValidDraft(value.draft) && UUID_PATTERN.test(value.requestToken)))) {
+      state.pending = freezePending({
+        scenarioId: value.scenarioId, requestId: value.requestId,
+        ...(value.draft ? { draft: { ...value.draft }, requestToken: value.requestToken } : {}),
+      });
       state.selectedScenarioId = value.scenarioId;
+    } else if (value) {
+      sessionStorage.removeItem(STORAGE_KEY);
     }
   } catch (_) {
     state.pending = null;
@@ -222,6 +313,7 @@ function showPendingControls() {
   byId("new-sample-button").hidden = false;
   byId("new-sample-button").disabled = state.working;
   renderScenarioList();
+  setIntakeLock();
 }
 
 function newRequestId() {
@@ -234,12 +326,14 @@ function newRequestId() {
 }
 
 async function postAnalysis(path) {
+  const pending = state.pending;
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      scenario_id: state.pending.scenarioId,
-      request_id: state.pending.requestId,
+      scenario_id: pending.scenarioId,
+      request_id: pending.requestId,
+      ...(pending.draft ? { draft: pending.draft, request_token: pending.requestToken } : {}),
     }),
   });
   let payload = {};
@@ -249,19 +343,23 @@ async function postAnalysis(path) {
     payload = {};
   }
   if (!response.ok) {
-    const code = payload.detail && typeof payload.detail.code === "string"
-      ? payload.detail.code
-      : "service_unavailable";
+    const code = response.status === 429 ? "rate_limited"
+      : response.status === 422 ? "invalid_input"
+      : payload.detail && typeof payload.detail.code === "string" ? payload.detail.code : "service_unavailable";
     throw Object.assign(new Error(ERROR_COPY[code] || ERROR_COPY.service_unavailable), {
       code,
       status: response.status,
+      fields: Array.isArray(payload.detail?.fields) ? payload.detail.fields : [],
     });
   }
   return payload;
 }
 
-function finishSuccess(result) {
-  const scenario = state.scenarios.find((item) => item.id === state.pending.scenarioId);
+async function finishSuccess(result, readExistingLogs = false) {
+  const pending = state.pending;
+  const canTrack = result.access_token !== null;
+  const scenario = pending.draft ? { id: pending.scenarioId, ...pending.draft }
+    : state.scenarios.find((item) => item.id === pending.scenarioId);
   state.working = false;
   state.liveEnabled = true;
   state.selectedScenarioId = state.pending.scenarioId;
@@ -277,11 +375,16 @@ function finishSuccess(result) {
   byId("run-button").disabled = false;
   byId("run-button").textContent = "再分析一个样例 ↗";
   byId("result-title").textContent = scenario?.title || "分析完成";
-  byId("result-eyebrow").textContent = "实时 AI 分析 · 已保存到 DEMO 表";
+  byId("result-eyebrow").textContent = canTrack ? "实时 AI 分析 · 已保存到 DEMO 表" : "实时 AI 分析 · 旧版报告（无日志保存权限）";
   setBadge("实时分析完成", "live");
-  setStatus("分析已完成，结果已写入本次演示记录。", "success");
+  setStatus(canTrack ? "分析已完成，结果已写入本次演示记录。"
+    : "旧版报告已完成，但没有报告恢复凭证，无法保存七天执行记录或在刷新后恢复。需要记录时，请编辑并确认虚构资料，重新提交生成新报告。", "success");
   renderAnalysis(result.analysis);
   renderScenarioList();
+  setIntakeLock();
+  byId("result-request-id").textContent = `报告 UUID：${result.request_id}`;
+  byId("result-request-id").hidden = false;
+  if (canTrack) await tracker.acceptSuccess(result, scenario, { readExistingLogs });
 }
 
 async function submitPending(path) {
@@ -296,11 +399,20 @@ async function submitPending(path) {
 
   try {
     const result = await postAnalysis(path);
-    if (result.status === "completed" && result.analysis) {
-      finishSuccess(result);
+    const hasAccessToken = typeof result.access_token === "string" && /^[0-9a-f]{64}$/i.test(result.access_token);
+    const legacyReport = !state.pending.draft && result.access_token === null;
+    if (result.status === "completed" && result.analysis && result.request_id === state.pending.requestId
+      && (hasAccessToken || legacyReport)) {
+      await finishSuccess(result, path === "/api/retry");
       return;
     }
     state.working = false;
+    if (result.status === "processing") {
+      setBadge("仍在处理中", "loading");
+      setStatus("原请求仍在处理。资料已锁定，请稍后点击恢复 / 重试读取同一请求的结果。");
+      showPendingControls();
+      return;
+    }
     if (result.status === "retryable_failed") {
       setBadge("需要重试", "error");
       setStatus(ERROR_COPY[result.error_code] || ERROR_COPY.service_unavailable, "error");
@@ -311,6 +423,16 @@ async function submitPending(path) {
     throw Object.assign(new Error(ERROR_COPY.service_unavailable), { code: "service_unavailable" });
   } catch (error) {
     state.working = false;
+    if (error.code === "invalid_input") {
+      clearPending();
+      const fields = error.fields.map((value) => Array.isArray(value) ? value.at(-1) : String(value).split(".").at(-1))
+        .filter((field) => Object.hasOwn(DRAFT_FIELDS, field) || field === "fictional_only");
+      const labels = [...new Set(fields)].map((field) => DRAFT_FIELDS[field]?.[0] || "虚构资料确认");
+      setBadge("请检查资料", "error");
+      intakeError(labels.length ? `请检查：${labels.join("、")}。必填、字数或内容不符合要求；请勿填写联系方式或密钥。` : ERROR_COPY.invalid_input, fields);
+      byId("result-content").replaceChildren(makeNode("div", "result-empty", "修改标出的资料后重新提交，将生成新的请求。"));
+      return;
+    }
     if (error.code === "demo_disabled") state.liveEnabled = false;
     setBadge("暂未完成", "error");
     setStatus(ERROR_COPY[error.code] || ERROR_COPY.service_unavailable, "error");
@@ -330,18 +452,20 @@ function renderStaticIfAvailable() {
 
 function startNewAnalysis() {
   if (state.working) return;
+  const draft = state.pending?.draft;
   clearPending();
-  state.selectedScenarioId = state.scenarios[0]?.id || null;
   renderScenarioList();
-  renderSelectedScenario();
+  renderSelectedScenario(draft);
   if (state.liveEnabled) {
-    showEmptyResult("选择样例后提交，即可生成只针对该样例的实时分析。", "经营问题 · 待开始");
+    showEmptyResult("选择模板并编辑虚构资料，确认后提交即可生成对应分析。", "经营问题 · 待开始");
   } else if (state.preview) {
     renderStaticPreview("实时服务未启用。下方结果是固定的早餐配送工作室静态示例。");
   }
 }
 
 async function initialize() {
+  tracker = window.ValidationTracking.create({ renderAnalysis });
+  tracker.restore();
   const [healthResult, scenariosResult, previewResult] = await Promise.allSettled([
     fetch("/api/health").then((response) => response.ok ? response.json() : Promise.reject(new Error("health"))),
     fetch("/api/scenarios").then((response) => response.ok ? response.json() : Promise.reject(new Error("scenarios"))),
@@ -368,12 +492,8 @@ async function initialize() {
   const runButton = byId("run-button");
   runButton.disabled = !state.liveEnabled || state.scenarios.length === 0;
   runButton.textContent = state.liveEnabled ? "运行实时分析 ↗" : "实时演示尚未启用";
-  runButton.addEventListener("click", () => {
-    if (!state.liveEnabled || state.working) return;
-    state.pending = { scenarioId: state.selectedScenarioId, requestId: newRequestId() };
-    savePending();
-    submitPending("/api/analyze");
-  });
+  runButton.addEventListener("click", startAnalysis);
+  byId("intake-form").addEventListener("submit", (event) => { event.preventDefault(); return startAnalysis(); });
 
   byId("retry-button").addEventListener("click", () => submitPending("/api/retry"));
   byId("new-sample-button").addEventListener("click", startNewAnalysis);
@@ -382,8 +502,8 @@ async function initialize() {
     showPendingControls();
     if (state.liveEnabled) {
       setBadge("待恢复的请求", "loading");
-      setStatus("发现尚未完成的同一请求。恢复检查会复用原请求 ID，不会新建演示记录。");
-      showEmptyResult("点击下方恢复按钮；如果服务已完成，系统会直接返回已保存结果。", "原请求 · 可安全恢复");
+      showEmptyResult("发现尚未完成的请求。资料已锁定，恢复 / 重试会复用原资料与恢复凭证；服务已完成时会直接返回已保存结果。", "原请求 · 可安全恢复");
+      setBadge("待恢复的请求", "loading");
       showPendingControls();
     } else if (state.preview) {
       renderStaticPreview("实时服务当前未启用；保留的请求可以在服务恢复后用原样例重试。");

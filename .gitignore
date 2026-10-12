@@ -7,3 +7,5 @@ __pycache__/
 .vercel/
 *screenshot*.tmp
 *screenshot*.png.tmp
+.live-acceptance-state.json
+.browser-acceptance-state.json

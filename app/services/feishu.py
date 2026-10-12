@@ -1,19 +1,20 @@
 """Small, fail-closed gateway for Feishu Bitable records."""
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.parse import quote
 
 import httpx
 from pydantic import ValidationError
 
 from app.config import Settings
-from app.schemas import AnalysisOutput, Scenario
+from app.schemas import AnalysisOutput, DayExecution, Scenario
 
 
 _RUNTIME_STATUSES = frozenset({"processing", "completed", "retryable_failed"})
 _UPDATE_LIST_FIELDS = frozenset({"关键观察", "风险", "7天验证动作"})
-_UPDATE_TEXT_FIELDS = frozenset({"经营摘要", "错误码"})
+_EXECUTION_FIELDS = {day: f"第{day}天执行记录" for day in range(1, 8)}
+_UPDATE_TEXT_FIELDS = frozenset({"经营摘要", "错误码", *_EXECUTION_FIELDS.values()})
 _UPDATE_FIELDS = frozenset({"处理状态", *_UPDATE_LIST_FIELDS, *_UPDATE_TEXT_FIELDS})
 
 
@@ -31,6 +32,9 @@ class FeishuRecord:
     request_id: str
     status: str
     analysis: AnalysisOutput | None = None
+    scenario: Scenario | None = None
+    executions: list[DayExecution] = field(default_factory=list)
+    request_token_digest: str | None = None
 
 
 def _invalid() -> FeishuError:
@@ -80,7 +84,42 @@ def _record(item: object, request_id: str) -> FeishuRecord:
             })
         except (ValueError, ValidationError):
             raise _invalid() from None
-    return FeishuRecord(record_id, request_id, status, analysis)
+    scenario = None
+    token_digest = None
+    snapshot = fields.get("资料快照")
+    if snapshot:
+        try:
+            snapshot_data = json.loads(_text(snapshot))
+            if isinstance(snapshot_data, dict) and "scenario" in snapshot_data:
+                scenario = Scenario.model_validate(snapshot_data["scenario"])
+                token_digest = _text(snapshot_data.get("request_token_digest"))
+                if len(token_digest) != 64 or any(c not in "0123456789abcdef" for c in token_digest):
+                    raise _invalid()
+            else:
+                scenario = Scenario.model_validate(snapshot_data)
+        except (ValueError, ValidationError):
+            raise _invalid() from None
+    elif all(isinstance(fields.get(name), str) for name in (
+        "场景名称", "行业", "产品服务", "目标客群", "经营问题",
+        "现有指标", "预算范围", "目标", "时间限制",
+    )):
+        scenario = Scenario(
+            id="legacy", title=fields["场景名称"], industry=fields["行业"],
+            offering=fields["产品服务"], target_customer=fields["目标客群"],
+            business_problem=fields["经营问题"], current_metrics=fields["现有指标"],
+            budget_range=fields["预算范围"], goal=fields["目标"], time_limit=fields["时间限制"],
+        )
+    executions = []
+    for day, name in _EXECUTION_FIELDS.items():
+        if fields.get(name):
+            try:
+                execution = DayExecution.model_validate_json(_text(fields[name]))
+            except (ValueError, ValidationError):
+                raise _invalid() from None
+            if execution.day != day:
+                raise _invalid()
+            executions.append(execution)
+    return FeishuRecord(record_id, request_id, status, analysis, scenario, executions, token_digest)
 
 
 class FeishuClient:
@@ -134,7 +173,10 @@ class FeishuClient:
             raise _invalid()
         return token
 
-    async def create_processing_record(self, token: str, request_id: str, scenario: Scenario) -> FeishuRecord:
+    async def create_processing_record(
+        self, token: str, request_id: str, scenario: Scenario,
+        request_token_digest: str | None = None,
+    ) -> FeishuRecord:
         error_code = "feishu_create_failed"
         path = self._records_path(error_code)
         fields = {
@@ -145,7 +187,12 @@ class FeishuClient:
             "目标": scenario.goal, "时间限制": scenario.time_limit,
             "处理状态": "processing", "经营摘要": "", "关键观察": "[]",
             "风险": "[]", "7天验证动作": "[]", "错误码": "",
+            "资料快照": scenario.model_dump_json(),
         }
+        if request_token_digest is not None:
+            fields["资料快照"] = json.dumps({
+                "scenario": scenario.model_dump(), "request_token_digest": request_token_digest,
+            }, ensure_ascii=False)
         data = _require_success(await self._request(
             "POST", path, error_code, headers=self._headers(token, error_code), json={"fields": fields},
         ), error_code)

@@ -8,6 +8,7 @@
     <title>经营验证工作台 · AI 经营分析</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/observations.js" defer></script>
+    <script src="/static/tracking.js" defer></script>
     <script src="/static/app.js" defer></script>
   </head>
   <body>
@@ -39,7 +40,7 @@
             <div class="hero-tags" aria-label="演示特点">
               <span>10 个虚构样例</span>
               <span>7 天验证动作</span>
-              <span>不收集个人信息</span>
+              <span>仅填写虚构资料</span>
             </div>
           </div>
           <aside class="rhythm-card" aria-label="七天验证流程">
@@ -49,7 +50,7 @@
             </div>
             <div class="rhythm-title"><strong>从问题</strong><span>到证据</span></div>
             <ol class="rhythm-steps">
-              <li><span class="step-number">01</span><span>记录真实基线</span><span class="step-line"></span></li>
+              <li><span class="step-number">01</span><span>记录样例基线</span><span class="step-line"></span></li>
               <li><span class="step-number">02</span><span>执行小步测试</span><span class="step-line"></span></li>
               <li><span class="step-number">03</span><span>按数据做判断</span><span class="step-line"></span></li>
             </ol>
@@ -63,27 +64,69 @@
             <div class="panel-heading">
               <div>
                 <h2 id="samples-title">选择一个经营现场</h2>
-                <p>只使用预置资料，不需要填写客户信息。</p>
+                <p>选一个模板，再编辑你的虚构经营实验。</p>
               </div>
               <span class="heading-stamp" aria-hidden="true">10<br>例</span>
             </div>
             <div id="scenario-list" class="scenario-list" aria-label="虚构经营场景"></div>
             <section class="selected-scenario" aria-labelledby="selected-title">
               <div class="selected-topline">
-                <span class="mini-label">当前样例</span>
+                <span class="mini-label">当前资料模板</span>
                 <span id="selected-industry" class="industry-chip">等待加载</span>
               </div>
               <h3 id="selected-title">正在读取样例…</h3>
-              <dl class="scenario-facts">
-                <div><dt>经营问题</dt><dd id="selected-problem">—</dd></div>
-                <div><dt>当前指标</dt><dd id="selected-metrics">—</dd></div>
-                <div><dt>验证目标</dt><dd id="selected-goal">—</dd></div>
-                <div><dt>测试预算</dt><dd id="selected-budget">—</dd></div>
-              </dl>
+              <form id="intake-form" class="intake-form">
+                <fieldset id="intake-fields" disabled>
+                  <legend>编辑虚构资料 <span>全部必填</span></legend>
+                  <div class="intake-grid">
+                    <div class="form-field field-wide">
+                      <label for="draft-title">样例名称 <small>80 字以内，以「虚构」开头</small></label>
+                      <input id="draft-title" name="title" type="text" maxlength="80" required autocomplete="off">
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-industry">所属行业 <small>60 字以内</small></label>
+                      <input id="draft-industry" name="industry" type="text" maxlength="60" required autocomplete="off">
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-offering">产品或服务 <small>300 字以内</small></label>
+                      <textarea id="draft-offering" name="offering" rows="2" maxlength="300" required></textarea>
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-target_customer">目标客群 <small>300 字以内</small></label>
+                      <textarea id="draft-target_customer" name="target_customer" rows="2" maxlength="300" required></textarea>
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-business_problem">经营问题 <small>600 字以内</small></label>
+                      <textarea id="draft-business_problem" name="business_problem" rows="3" maxlength="600" required></textarea>
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-current_metrics">当前指标 <small>600 字以内</small></label>
+                      <textarea id="draft-current_metrics" name="current_metrics" rows="3" maxlength="600" required></textarea>
+                    </div>
+                    <div class="form-field field-wide">
+                      <label for="draft-goal">验证目标 <small>400 字以内</small></label>
+                      <textarea id="draft-goal" name="goal" rows="2" maxlength="400" required></textarea>
+                    </div>
+                    <div class="form-field">
+                      <label for="draft-budget_range">测试预算 <small>100 字以内</small></label>
+                      <input id="draft-budget_range" name="budget_range" type="text" maxlength="100" required autocomplete="off">
+                    </div>
+                    <div class="form-field">
+                      <label for="draft-time_limit">验证时限 <small>100 字以内</small></label>
+                      <input id="draft-time_limit" name="time_limit" type="text" maxlength="100" required autocomplete="off">
+                    </div>
+                  </div>
+                  <label class="confirmation" for="fictional-only">
+                    <input id="fictional-only" name="fictional_only" type="checkbox" required>
+                    <span>我确认全部资料均为虚构，不含真实个人信息、联系方式或密钥。</span>
+                  </label>
+                </fieldset>
+                <p id="intake-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+              </form>
             </section>
             <p class="privacy-note">
               <span class="privacy-icon" aria-hidden="true">i</span>
-              <span>演示只接受这 10 份虚构样例。请勿提交真实姓名、电话、邮箱或客户资料。</span>
+              <span>可编辑虚构资料；请勿填写真实姓名、电话、邮箱、客户资料或密钥。自动检测无法保证识别所有个人信息。</span>
             </p>
           </section>
 
@@ -102,6 +145,7 @@
             <p id="status-message" class="status-message" role="status" aria-live="polite">
               正在准备样例；静态预览，未执行实时分析。
             </p>
+            <p id="result-request-id" class="request-id" hidden></p>
             <div id="result-content" class="result-content" aria-live="polite"></div>
             <div class="run-controls">
               <div class="run-actions">
@@ -109,17 +153,57 @@
                   检查实时服务… <span aria-hidden="true">↗</span>
                 </button>
                 <button id="retry-button" class="secondary-button" type="button" hidden>
-                  用相同样例重试 <span aria-hidden="true">↻</span>
+                  用原资料恢复 / 重试 <span aria-hidden="true">↻</span>
                 </button>
                 <button id="new-sample-button" class="text-button" type="button" hidden>
-                  放弃本次并换样例
+                  结束本次请求，重新编辑
                 </button>
               </div>
               <p id="quota-note" class="quota-note">
-                实时分析会调用 AI 并写入专用 DEMO 表，可能消耗 DeepSeek API 额度。
+                分析/重试/恢复/保存合计每IP每10分钟5次。实时分析会调用 AI 并写入专用 DEMO 表，可能消耗 DeepSeek API 额度。
               </p>
             </div>
           </section>
+        </section>
+
+        <section class="tracker-panel" aria-labelledby="tracker-heading">
+          <div class="section-kicker"><span>03 / FIELD LOG</span><span>最近一次已保存报告</span></div>
+          <div class="tracker-heading">
+            <div>
+              <h2 id="tracker-heading">七天执行记录</h2>
+              <p id="tracker-title" class="tracker-title">完成实时分析后，在这里记录虚构实验。</p>
+            </div>
+            <span id="tracker-progress" class="progress-badge">0 / 7 天已完成</span>
+          </div>
+          <p id="tracker-request-id" class="request-id" hidden></p>
+          <p class="tracker-note">执行日志仅为虚构演示，不代表已经完成真实经营实验。保存日志不会再次调用 AI。浏览器仅保存最近一份报告的恢复凭证。与分析共享每 IP 每 10 分钟 5 次的限额；刷新恢复占用 1 次，连续保存七天需等待下一限额窗口。</p>
+          <div class="tracker-controls">
+            <button id="tracker-refresh" class="secondary-button" type="button" disabled>重新读取已保存记录 ↻</button>
+            <button id="copy-recovery-code" class="text-button" type="button" hidden>复制报告恢复码</button>
+          </div>
+          <p id="tracker-status" class="status-message" role="status" aria-live="polite">尚无已保存报告。</p>
+          <details class="recovery-code-panel">
+            <summary>恢复已有报告</summary>
+            <div class="form-field">
+              <label for="recovery-code-input">报告恢复码</label>
+              <textarea id="recovery-code-input" rows="3" maxlength="512" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="recovery-code-warning recovery-code-feedback" placeholder="粘贴从「复制报告恢复码」保存的完整内容"></textarea>
+            </div>
+            <p id="recovery-code-warning" class="tracker-note">持有恢复码的人可以读取和编辑该报告，请妥善保存。恢复会替换浏览器保存的最近报告及本页未保存的日志；读取占用共享限额 1 次。</p>
+            <div class="execution-footer">
+              <button id="restore-recovery-code" class="secondary-button" type="button">恢复报告 ↗</button>
+              <p id="recovery-code-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+            </div>
+          </details>
+          <details id="saved-snapshot" class="saved-report saved-snapshot" hidden>
+            <summary>查看这份报告的资料快照</summary>
+            <p id="saved-snapshot-source" class="tracker-note"></p>
+            <dl id="saved-snapshot-content" class="scenario-facts snapshot-facts"></dl>
+          </details>
+          <details id="saved-report" class="saved-report" hidden>
+            <summary>查看这份已保存的分析报告</summary>
+            <div id="saved-report-content" class="result-content"></div>
+          </details>
+          <div id="tracker-list" class="tracker-list"></div>
         </section>
 
         <section class="method-strip" aria-label="验证原则">
