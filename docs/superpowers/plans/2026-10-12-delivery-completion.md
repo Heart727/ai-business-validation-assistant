@@ -54,4 +54,4 @@ Files: scripts/prepare_live_table.py, scripts/verify_live_flow.py, docs/live-acc
 - [x] Run ten varied fictional drafts through local API and real services; read back snapshots/retries/logs, export sanitized inputs and outputs.
 - [x] Document input validation, content conflicts and invalid access tokens; retain mock upstream failure evidence.
 - [x] Update user-facing docs, actual screenshots, personal responsibility/AI-assistance disclosure and resume-ready wording.
-- [ ] Full appropriate tests, credential/diff review, commit/push/deploy and anonymous public verification.
+- [x] Full appropriate tests, credential/diff review, commit/push/deploy and anonymous public verification.

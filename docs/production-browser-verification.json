@@ -1,0 +1,101 @@
+{
+  "verified_date": "2026-10-13",
+  "timezone": "Asia/Hong_Kong",
+  "url": "https://business-validation-lab.vercel.app/",
+  "mode": "anonymous_production_browser_real_integrations",
+  "request_id": "3d59f095-7e67-4250-adf4-67970e8b0bf0",
+  "scenario_id": "neighborhood-coffee",
+  "input": {
+    "title": "虚构线上验收：街区咖啡店",
+    "industry": "咖啡零售",
+    "offering": "现制咖啡与简餐",
+    "target_customer": "附近通勤者与社区居民",
+    "business_problem": "下午时段到店量偏低",
+    "current_metrics": "虚构资料：每天60杯，复购占比20%，到店咨询12次",
+    "budget_range": "虚构预算：一周200元",
+    "goal": "虚构目标：7天比较提醒前后的复购表现，预算不超过200元",
+    "time_limit": "7 天验证"
+  },
+  "analysis": {
+    "executive_summary": "当前街区咖啡店下午时段到店量偏低，需在7天内以不超过200元预算验证轻量提醒或激励方式能否提升复购表现，重点比较提醒前后的复购变化。",
+    "observations": [
+      "证据：输入资料显示每天60杯，复购占比20%，到店咨询12次，预算一周200元，目标为7天比较提醒前后的复购表现。",
+      "推断：假设下午时段到店量偏低可能与通勤者及社区居民缺乏到店触发提醒有关，提醒或小额激励可能提升复购。",
+      "缺失信息：需采集下午分时段到店杯数、复购顾客身份识别方式、提醒触达渠道及历史复购周期等数据。"
+    ],
+    "risks": [
+      "样本量小，7天内复购变化可能受随机波动影响，难以形成稳定结论。",
+      "200元预算限制提醒渠道和激励力度，可能无法有效触达足够顾客。",
+      "时间仅7天，复购行为本身存在延迟，可能低估提醒效果。"
+    ],
+    "seven_day_actions": [
+      {
+        "day": 1,
+        "action": "记录未来7天每天下午时段到店杯数与复购顾客数量，作为提醒前基线。",
+        "metric": "下午时段到店杯数、复购顾客数",
+        "decision_rule": "若基线数据无法按天区分下午时段，则调整记录方式后再继续。"
+      },
+      {
+        "day": 2,
+        "action": "设计轻量提醒内容，例如下午特定时段凭上次消费记录享小额折扣或双倍积分。",
+        "metric": "提醒内容完成度、预计触达人数",
+        "decision_rule": "若提醒内容无法在预算内触达至少20人，则简化方案或改用口头提醒。"
+      },
+      {
+        "day": 3,
+        "action": "通过店内海报、收银台口头告知或简单短信/微信提醒下午时段复购激励。",
+        "metric": "实际触达顾客数、触达成本",
+        "decision_rule": "若触达成本超过200元或触达人数低于10人，则停止该渠道并更换低成本方式。"
+      },
+      {
+        "day": 4,
+        "action": "继续执行提醒，并记录下午时段到店顾客中属于复购的比例。",
+        "metric": "下午复购顾客数、下午到店总杯数",
+        "decision_rule": "若下午复购顾客数相比基线无变化，则检查提醒是否被看见或理解。"
+      },
+      {
+        "day": 5,
+        "action": "对到店复购顾客简单询问是否因提醒而来，记录反馈。",
+        "metric": "因提醒到店的复购顾客数、反馈原因",
+        "decision_rule": "若超过一半复购顾客表示未看到提醒，则调整提醒位置或话术。"
+      },
+      {
+        "day": 6,
+        "action": "汇总前5天下午时段复购数据，与提醒前基线进行初步比较。",
+        "metric": "下午复购率变化、单杯提醒成本",
+        "decision_rule": "若下午复购率提升不足10%且成本接近200元，则准备停止或调整方案。"
+      },
+      {
+        "day": 7,
+        "action": "完成7天数据整理，判断提醒是否带来复购提升，并决定继续、调整或停止。",
+        "metric": "7天下午复购率对比、总花费、样本量",
+        "decision_rule": "若下午复购率提升超过15%且总花费不超过200元，则继续并优化；若提升不明显但成本可控，则调整激励方式；若成本超支或复购下降，则停止。"
+      }
+    ]
+  },
+  "posts": [
+    {
+      "path": "/api/analyze",
+      "status": 200
+    },
+    {
+      "path": "/api/actions",
+      "status": 200
+    },
+    {
+      "path": "/api/record",
+      "status": 200
+    }
+  ],
+  "checks": [
+    "no_vercel_login",
+    "editable_form_submitted",
+    "seven_distinct_days",
+    "day1_saved",
+    "reload_restored_metric_and_report",
+    "persisted_snapshot_matches_edited_input",
+    "desktop_no_overflow_or_js_error",
+    "390px_mobile_form_no_overflow"
+  ],
+  "note": "实际新调用一次AI并保存虚构日志；只使用3次共享POST额度。手机仅检查表单布局，完整手机交互另由本地模拟服务验证。"
+}
