@@ -14,6 +14,14 @@
 
 第一次使用请看 [保姆级教程](docs/user-guide.md)。求职介绍可用 [项目案例](docs/case-study.md) 和 [简历项目条目及面试脚本](docs/resume-project.md)。
 
+## 90 秒操作演示
+
+[![90 秒项目演示：填写虚构资料、查看报告、保存并恢复日志](static/demo/demo-poster.png)](https://business-validation-lab.vercel.app/static/demo/index.html)
+
+[观看视频](https://business-validation-lab.vercel.app/static/demo/index.html) · [下载 MP4](static/demo/project-demo.mp4) · [讲解文本与录制说明](docs/demo-video.md)
+
+配有中文字幕和中文合成讲解。视频读取此前已通过真实接口生成的报告，并实际保存日志、刷新读回；本次录屏没有重新调用 AI。全部为虚构演示资料。
+
 ## 截图
 
 ![公开演示 - 选择虚构样例](docs/screenshots/live-demo-form.png)

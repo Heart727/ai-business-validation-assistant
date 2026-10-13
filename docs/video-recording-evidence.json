@@ -1,0 +1,38 @@
+{
+  "recorded_date": "2026-10-13",
+  "url": "https://business-validation-lab.vercel.app/",
+  "mode": "anonymous_public_browser_existing_real_report",
+  "request_id": "3d59f095-7e67-4250-adf4-67970e8b0bf0",
+  "new_ai_calls": 0,
+  "posts": [
+    {
+      "path": "/api/record",
+      "status": 200
+    },
+    {
+      "path": "/api/actions",
+      "status": 200
+    },
+    {
+      "path": "/api/record",
+      "status": 200
+    }
+  ],
+  "screenshots": [
+    "01-public-page.png",
+    "02-edited-form.png",
+    "03-real-saved-report.png",
+    "04-seven-day-actions.png",
+    "05-saved-day-one.png",
+    "06-restored-log.png",
+    "07-persisted-snapshot.png"
+  ],
+  "checks": [
+    "real_saved_report_read_from_feishu",
+    "virtual_day_one_saved",
+    "page_reload_restored_saved_values",
+    "no_page_errors",
+    "no_recovery_code_shown"
+  ],
+  "note": "90秒屏幕操作录制，读取此前真实AI结果；字幕为录制专用叠加层，旁白为中文合成语音。执行数据为虚构演示。"
+}

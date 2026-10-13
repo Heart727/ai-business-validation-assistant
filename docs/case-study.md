@@ -4,6 +4,8 @@
 
 演示：[公开实时演示](https://business-validation-lab.vercel.app/)（无需登录，只使用虚构样例）。
 
+[90 秒操作视频](https://business-validation-lab.vercel.app/static/demo/index.html) 展示填表、真实历史报告、日志保存与刷新读回；[录制说明](demo-video.md) 标明每个阶段及证据边界。
+
 访客从 10 份虚构模板填入并编辑经营资料，确认全部为虚构后提交分析。资料快照、摘要、证据、推断、缺失信息、风险和七天动作保存到独立飞书 DEMO 表；随后按天保存执行状态、观察指标与结论，并可恢复已保存报告。
 
 ## 需求

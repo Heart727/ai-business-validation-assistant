@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#102c2b">
+    <meta name="description" content="90 秒了解 AI 经营分析与七天验证：填写虚构资料、读取真实报告、保存日志并刷新恢复。">
+    <title>90 秒项目演示 · AI 经营分析与 7 天验证助手</title>
+    <style>
+      :root { color-scheme: light; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; color: #173d35; background: #f3f1e9; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      main { width: min(1120px, calc(100% - 40px)); margin: 48px auto; }
+      .kicker { margin: 0 0 14px; color: #527369; font-size: 12px; letter-spacing: 2px; }
+      h1 { margin: 0 0 16px; font-size: clamp(25px, 4vw, 38px); line-height: 1.4; }
+      .intro { max-width: 780px; margin: 0 0 24px; font-size: 15px; line-height: 1.9; color: #57685e; }
+      video { display: block; width: 100%; aspect-ratio: 3 / 2; background: #102c2b; border-radius: 12px; box-shadow: 0 16px 44px #173d351a; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+      .actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 11px 18px; border: 1px solid #bdcdc2; border-radius: 6px; text-decoration: none; color: #173d35; font-size: 14px; }
+      .actions .primary { background: #176b60; border-color: #176b60; color: white; }
+      a:focus-visible, video:focus-visible { outline: 3px solid #bd802d; outline-offset: 4px; }
+      .note { margin: 0; padding-top: 18px; border-top: 1px solid #d9dfd4; color: #677268; font-size: 13px; line-height: 1.9; }
+      @media (max-width: 600px) { main { width: calc(100% - 28px); margin: 30px auto; } .actions a { flex: 1 1 auto; } video { border-radius: 7px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="kicker">PROJECT WALKTHROUGH / 90 SECONDS</p>
+      <h1>从经营问题，到七天验证记录。</h1>
+      <p class="intro">填写虚构资料，查看有依据边界的 AI 报告，再保存指标与结论。90 秒演示配有中文字幕和合成讲解，可全屏观看。</p>
+      <video controls playsinline preload="metadata" poster="/static/demo/demo-poster.png" aria-label="AI 经营分析与七天验证助手，90 秒操作演示">
+        <source src="/static/demo/project-demo.mp4" type="video/mp4">
+        <track kind="captions" src="/static/demo/project-demo.vtt" srclang="zh-CN" label="中文讲解字幕">
+        你的浏览器无法播放视频，请下载 MP4 后观看。
+      </video>
+      <nav class="actions" aria-label="体验与资料">
+        <a class="primary" href="/">亲自体验项目 ↗</a>
+        <a href="https://github.com/Heart727/business-validation-lab">查看代码与验收证据</a>
+        <a href="/static/demo/project-demo.mp4" download="AI经营分析_90秒演示.mp4">下载视频</a>
+      </nav>
+      <p class="note">录制日期：2026-10-13。视频读取此前通过真实 Dify / DeepSeek 生成并保存至飞书的报告；日志保存与刷新读回为实际操作，本次没有重新生成分析。全部输入与执行记录为虚构演示，不代表经营收益。个人求职作品，使用 Codex / AI 辅助开发。</p>
+    </main>
+  </body>
+</html>
