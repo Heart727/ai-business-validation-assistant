@@ -1,0 +1,2 @@
+# Preserve PDF bytes and avoid treating embedded image/font streams as text.
+*.pdf binary
