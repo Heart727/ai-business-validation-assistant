@@ -29,13 +29,15 @@
 
 ## 截图
 
-![公开演示 - 选择虚构样例](docs/screenshots/live-demo-form.png)
+![当前表单 - 必填成功判定标准，恢复中的虚构资料](docs/screenshots/change-request-form.png)
 
 ![实时分析 - 经营摘要与观察](docs/screenshots/live-demo-analysis.png)
 
 ![七天执行记录 - 保存指标与结论](docs/screenshots/live-demo-tracking.png)
 
-![持久化核对 - 从飞书读回资料快照](docs/screenshots/live-demo-snapshot.png)
+![持久化核对 - 新字段从真实飞书读回](docs/screenshots/change-request-snapshot.png)
+
+当前表单与资料快照截图来自 2026-10-14 的改需求验收；摘要和执行记录图读取 2026-10-12 的历史虚构样例。各次验收与版本分别留有记录。
 
 离线回退的桌面和手机截图保留在 [docs/screenshots](docs/screenshots/)；它们明确标记为静态预览。
 

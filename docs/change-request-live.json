@@ -19,7 +19,92 @@
   "same_record_id": true,
   "after_injected_failure": "retryable_failed",
   "input_snapshot_retained": true,
-  "new_real_ai_calls": 0,
-  "public_retry_status": "pending",
-  "note": "模型故障由测试替身注入，不是供应商真实停机；飞书创建、幂等检查和失败记录保存使用真实接口。"
+  "new_real_ai_calls": 1,
+  "public_retry_status": "completed",
+  "note": "故障由本地替身注入；真实飞书保留同一记录后，公开浏览器通过真实Dify/DeepSeek恢复。完成后同UUID重复返回已保存结果。3个生产POST均200，未解除WAF；不声称跨实例模型恰好一次计费。",
+  "new_real_workflow_calls": 1,
+  "analysis": {
+    "executive_summary": "当前咖啡店下午时段到店量偏低，需在七天内以极低预算验证提醒机制能否提升复购占比，重点关注第7天复购占比是否达到25%且支出不超过200元。",
+    "observations": [
+      "证据：输入资料显示每天60杯，复购占比20%，到店咨询12次，预算为七天200元。",
+      "推断：假设下午时段到店量偏低可能与顾客遗忘或缺乏提醒有关，提醒机制可能提升复购占比。",
+      "缺失信息：需采集下午时段具体到店人数、提醒触达方式及顾客响应率、每日复购人数与总杯数。"
+    ],
+    "risks": [
+      "样本量过小，七天总杯数约420杯，复购占比波动可能受随机因素影响。",
+      "预算仅200元，可能限制提醒渠道的覆盖范围或频次。",
+      "七天时间较短，顾客行为改变可能尚未稳定，结果可能无法反映长期效果。"
+    ],
+    "seven_day_actions": [
+      {
+        "day": 1,
+        "action": "记录当天总杯数、复购人数及下午时段到店人数，作为基线。",
+        "metric": "当天复购占比与下午时段到店人数",
+        "decision_rule": "若基线复购占比低于20%，继续执行提醒测试；否则调整提醒策略。"
+      },
+      {
+        "day": 2,
+        "action": "设计并测试低成本提醒方式（如手写小票提示或口头提醒），记录顾客响应。",
+        "metric": "收到提醒后当日再次到店人数",
+        "decision_rule": "若响应人数为0，则更换提醒方式；否则继续。"
+      },
+      {
+        "day": 3,
+        "action": "对上午到店顾客发放次日可用的小额优惠提醒（成本控制在预算内），记录发放数量。",
+        "metric": "发放提醒数量与成本",
+        "decision_rule": "若单日提醒成本超过30元，则缩减发放范围。"
+      },
+      {
+        "day": 4,
+        "action": "跟踪前一日收到提醒的顾客是否在今日复购，记录复购人数。",
+        "metric": "提醒后次日复购人数",
+        "decision_rule": "若复购人数为0，则停止该提醒方式并调整。"
+      },
+      {
+        "day": 5,
+        "action": "继续执行提醒并记录每日总杯数、复购人数及下午时段到店人数。",
+        "metric": "当日复购占比与下午时段到店人数",
+        "decision_rule": "若复购占比仍低于20%，则准备调整提醒内容或渠道。"
+      },
+      {
+        "day": 6,
+        "action": "汇总前五天数据，计算累计支出与平均复购占比，判断是否接近目标。",
+        "metric": "累计支出与平均复购占比",
+        "decision_rule": "若累计支出超过150元且复购占比无上升趋势，则停止测试并记录为待验证。"
+      },
+      {
+        "day": 7,
+        "action": "统计七天总杯数、总复购人数、累计支出，计算第7天复购占比。",
+        "metric": "第7天复购占比与累计支出",
+        "decision_rule": "若第7天复购占比至少25%且累计支出不超过200元，则继续该提醒策略；若样本不足或未达标，则记为待验证并调整或停止。"
+      }
+    ]
+  },
+  "public_posts": [
+    {
+      "path": "/api/retry",
+      "status": 200
+    },
+    {
+      "path": "/api/record",
+      "status": 200
+    },
+    {
+      "path": "/api/retry",
+      "status": 200
+    }
+  ],
+  "criterion_in_readback": true,
+  "criterion_reflected_in_model_text": true,
+  "completed_repeat_identical": true,
+  "page_errors": [],
+  "after_real_retry": "completed",
+  "same_record_after_recovery": true,
+  "separate_criterion_column_matches": true,
+  "single_record_lookup_passed": true,
+  "semantic_review": {
+    "status": "needs_metric_definition_confirmation",
+    "observation": "第1天同时记录复购人数与总杯数，第7天汇总七天数据却称第7天指标；统计单位和单日/累计口径需人工明确。",
+    "scope": "字段传递、结构、幂等与真实恢复已验证；不声称经营内容已通过人工口径验收。"
+  }
 }
