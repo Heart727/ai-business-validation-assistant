@@ -129,9 +129,10 @@
   "saved_report_matches_model_output": true,
   "original_report_unchanged": true,
   "original_report_reference_commit": "161b2b66ba119e83ee2442ed3fa8f143fd28971d",
-  "original_report_sha256": "bb335d17fbf2f42419dc4987a91cef23aed32f28a97218d38e8a092fcced4eb7",
+  "original_report_sha256": "5b1724f9ee5ecea113b6945da61810b4098bd6c55c7d8f3d333f16d168ef9ba3",
   "new_separate_record": true,
   "verification_observations": [
     "本地独立飞书只读检查第一次遇到RequestError（未取得上游响应），相同只读检查再次成功；未改应用超时、未重新生成AI报告。"
-  ]
+  ],
+  "original_report_hash_basis": "原报告在original_report_reference_commit中的Git blob原始字节；可与该提交的GitHub raw文件核对，避免本地CRLF差异。"
 }
