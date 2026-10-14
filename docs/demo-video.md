@@ -2,7 +2,7 @@
 
 [打开视频观看页](https://business-validation-lab.vercel.app/static/demo/index.html) · [下载 MP4](https://business-validation-lab.vercel.app/static/demo/project-demo.mp4) · [亲自体验](https://business-validation-lab.vercel.app/)
 
-视频录制于 2026-10-13，1440 × 960，90 秒，约 5.2 MiB。画面附中文字幕，旁白为中文合成语音；播放页可选择讲解字幕，也可下载视频后播放。
+视频录制的是 2026-10-13 的九字段版本；2026-10-14 新增必填「成功判定标准」，当前表单以公开网页为准，验证见 [改需求练习](change-request-exercise.md)。视频分辨率为 1440 × 960，90 秒，约 5.2 MiB。画面附中文字幕，旁白为中文合成语音；播放页可选择讲解字幕，也可下载视频后播放。
 
 ## 视频里展示了什么
 

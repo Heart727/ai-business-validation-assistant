@@ -1,8 +1,10 @@
 """Small, fail-closed gateway for Feishu Bitable records."""
 
 import json
+import hashlib
 from dataclasses import dataclass, field
 from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 from pydantic import ValidationError
@@ -74,7 +76,7 @@ def _record(item: object, request_id: str) -> FeishuRecord:
     if status not in _RUNTIME_STATUSES:
         raise _invalid()
     analysis = None
-    if status == "completed":
+    if status == "completed" or fields.get("经营摘要"):
         try:
             analysis = AnalysisOutput.model_validate({
                 "executive_summary": _text(fields.get("经营摘要")),
@@ -82,8 +84,13 @@ def _record(item: object, request_id: str) -> FeishuRecord:
                 "risks": json.loads(_text(fields.get("风险"))),
                 "seven_day_actions": json.loads(_text(fields.get("7天验证动作"))),
             })
-        except (ValueError, ValidationError):
-            raise _invalid() from None
+        except (ValueError, ValidationError, FeishuError):
+            if status == "completed":
+                raise _invalid() from None
+        else:
+            # A valid, saved report survives a late failure-status write from
+            # another instance. Only a fully validated report has this priority.
+            status = "completed"
     scenario = None
     token_digest = None
     snapshot = fields.get("资料快照")
@@ -189,15 +196,20 @@ class FeishuClient:
             "风险": "[]", "7天验证动作": "[]", "错误码": "",
             "资料快照": scenario.model_dump_json(),
         }
+        if scenario.success_criteria is not None:
+            fields["成功判定标准"] = scenario.success_criteria
         if request_token_digest is not None:
             fields["资料快照"] = json.dumps({
                 "scenario": scenario.model_dump(), "request_token_digest": request_token_digest,
             }, ensure_ascii=False)
         data = _require_success(await self._request(
-            "POST", path, error_code, headers=self._headers(token, error_code), json={"fields": fields},
+            "POST", path, error_code, headers=self._headers(token, error_code),
+            params={"client_token": str(UUID(bytes=hashlib.sha256(
+                f"bitable-create-v1:{path}:{request_id}".encode()
+            ).digest()[:16], version=4))}, json={"fields": fields},
         ), error_code)
         record = _record(data.get("record"), request_id)
-        if record.status != "processing":
+        if record.status != "processing" and record.analysis is None:
             raise _invalid()
         return record
 

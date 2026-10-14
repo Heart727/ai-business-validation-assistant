@@ -1,0 +1,13 @@
+{
+  "mode": "mock_no_network",
+  "new_field": "success_criteria",
+  "required_field_rejected": 422,
+  "failed_call_kept_input_and_record": true,
+  "retry_and_repeat_same_record": true,
+  "original_request_records": 1,
+  "simulated_model_attempts": 2,
+  "parallel_requests": 8,
+  "parallel_records": 1,
+  "parallel_model_calls": 1,
+  "note": "独立模拟集成验收；无真实AI调用、无网络、未写入飞书；跨实例幂等创建另用真实飞书核验。"
+}

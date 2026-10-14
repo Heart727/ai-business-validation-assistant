@@ -8,7 +8,8 @@ window.ValidationTracking = (() => {
   const statuses = { pending: "待执行", completed: "已完成", skipped: "已跳过" };
   const snapshotFields = {
     title: "样例名称", industry: "所属行业", offering: "产品或服务", target_customer: "目标客群",
-    business_problem: "经营问题", current_metrics: "当前指标", budget_range: "测试预算", goal: "验证目标", time_limit: "验证时限",
+    business_problem: "经营问题", current_metrics: "当前指标", budget_range: "测试预算", goal: "验证目标",
+    success_criteria: "成功判定标准", time_limit: "验证时限",
   };
   const errorCopy = {
     record_access_denied: "报告恢复凭证无效或已失效，无法读取或保存。请重新完成一次虚构资料分析。",
@@ -212,7 +213,9 @@ window.ValidationTracking = (() => {
         ? "本次提交资料（已确认保存）" : "已从演示表读回资料快照";
       for (const [field, label] of Object.entries(snapshotFields)) {
         const pair = node("div", "");
-        pair.append(node("dt", "", label), node("dd", "", typeof scenario[field] === "string" ? scenario[field] : "—"));
+        const value = typeof scenario[field] === "string" && scenario[field].trim()
+          ? scenario[field] : field === "success_criteria" ? "旧版未填写" : "—";
+        pair.append(node("dt", "", label), node("dd", "", value));
         content.append(pair);
       }
     }

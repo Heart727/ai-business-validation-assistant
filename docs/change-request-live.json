@@ -1,0 +1,25 @@
+{
+  "verified_date": "2026-10-14",
+  "mode": "real_feishu_simulated_model_failure_then_public_retry",
+  "request_id": "dd73628f-78d8-4d7a-8826-018fdcd5ad45",
+  "record_id": "reczz28N88xuTpt3",
+  "input": {
+    "title": "虚构改需求练习：模型故障后保留咖啡店记录",
+    "industry": "咖啡零售",
+    "offering": "现制咖啡与简餐",
+    "target_customer": "附近通勤者与社区居民",
+    "business_problem": "下午时段到店量偏低",
+    "current_metrics": "虚构资料：每天60杯，复购占比20%，到店咨询12次",
+    "budget_range": "虚构预算：七天200元",
+    "goal": "虚构目标：七天比较提醒前后的复购占比",
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构成功门槛：第7天复购占比至少25%，累计支出不超过200元；样本不足则记为待验证"
+  },
+  "real_feishu_create_requests": 2,
+  "same_record_id": true,
+  "after_injected_failure": "retryable_failed",
+  "input_snapshot_retained": true,
+  "new_real_ai_calls": 0,
+  "public_retry_status": "pending",
+  "note": "模型故障由测试替身注入，不是供应商真实停机；飞书创建、幂等检查和失败记录保存使用真实接口。"
+}

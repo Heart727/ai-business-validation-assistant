@@ -22,6 +22,8 @@ class Scenario(BaseModel):
     budget_range: str
     goal: str
     time_limit: str
+    # Historical records did not contain this field; do not invent a threshold.
+    success_criteria: str | None = None
 
 
 class DayAction(BaseModel):
@@ -86,7 +88,7 @@ class PipelineResult(BaseModel):
         return self
 
 
-class ScenarioDraft(BaseModel):
+class LegacyScenarioDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     title: str = Field(min_length=1, max_length=80)
@@ -126,6 +128,15 @@ class ScenarioDraft(BaseModel):
         return Scenario(id=scenario_id, **self.model_dump(exclude={"fictional_only"}))
 
 
+class ScenarioDraft(LegacyScenarioDraft):
+    success_criteria: str = Field(min_length=1, max_length=300)
+
+    @field_validator("success_criteria")
+    @classmethod
+    def screen_success_criteria(cls, value):
+        return require_demo_text(value)
+
+
 class ScenarioRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -139,6 +150,11 @@ class ScenarioRequest(BaseModel):
         if self.draft is not None and self.request_token is None:
             raise ValueError("Edited drafts require a private recovery nonce")
         return self
+
+
+class RetryScenarioRequest(ScenarioRequest):
+    # Only /api/retry can accept an old draft, and it may not create a new row.
+    draft: ScenarioDraft | LegacyScenarioDraft | None = None
 
 
 class DayExecutionInput(BaseModel):

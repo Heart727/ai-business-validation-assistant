@@ -9,3 +9,4 @@ __pycache__/
 *screenshot*.png.tmp
 .live-acceptance-state.json
 .browser-acceptance-state.json
+.change-request-state.json

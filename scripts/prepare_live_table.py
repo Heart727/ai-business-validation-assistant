@@ -1,4 +1,4 @@
-"""Idempotently add the eight text fields needed by intake and tracking."""
+"""Idempotently add text fields needed by intake, criteria and tracking."""
 
 import argparse
 import asyncio
@@ -37,7 +37,7 @@ async def prepare(apply: bool):
         if data.get("has_more"):
             raise RuntimeError("unexpected_field_pagination")
         existing = {field["field_name"]: field["type"] for field in data.get("items", [])}
-        names = ["资料快照", *[f"第{day}天执行记录" for day in range(1, 8)]]
+        names = ["资料快照", "成功判定标准", *[f"第{day}天执行记录" for day in range(1, 8)]]
         for name in names:
             if name in existing:
                 if existing[name] != 1:

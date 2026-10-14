@@ -97,7 +97,7 @@ async def test_pipeline_creates_before_analysis_and_updates_same_record(pipeline
 
     result = await pipeline.submit(scenario_id, "request-1")
 
-    assert events == ["token", "find", "create", "dify", "update:completed"]
+    assert events == ["token", "find", "create", "find", "dify", "update:completed"]
     assert result == PipelineResult(
         request_id="request-1", status="completed", analysis=dify.analysis
     )
@@ -192,7 +192,7 @@ async def test_total_pipeline_timeout_marks_known_record_retryable(
 
     assert result.status == "retryable_failed"
     assert result.error_code == "pipeline_timeout"
-    assert events == ["token", "find", "create", "dify", "update:retryable_failed"]
+    assert events == ["token", "find", "create", "find", "dify", "find", "update:retryable_failed", "find"]
     assert feishu.records["request-1"].status == "retryable_failed"
     assert feishu.create_count == 1
 

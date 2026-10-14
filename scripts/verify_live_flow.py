@@ -60,7 +60,8 @@ async def verify(limit, output, state_path):
             saved_state = state[scenario.id]
             body = {"scenario_id": scenario.id, **saved_state}
             started = time.monotonic()
-            response = await api.post("/api/analyze", json=body)
+            endpoint = "/api/retry" if "success_criteria" not in saved_state["draft"] else "/api/analyze"
+            response = await api.post(endpoint, json=body)
             payload = response.json()
             if response.status_code != 200 or payload.get("status") != "completed":
                 code = payload.get("error_code") or payload.get("detail", {}).get("code") or "unknown"
@@ -73,7 +74,7 @@ async def verify(limit, output, state_path):
                 raise RuntimeError("readback_failed")
             details = RecordDetails.model_validate(details_response.json())
             expected = {key: value for key, value in saved_state["draft"].items() if key != "fictional_only"}
-            if details.scenario.model_dump(exclude={"id"}) != expected:
+            if details.scenario.model_dump(exclude={"id"}, exclude_none=True) != expected:
                 raise RuntimeError("input_snapshot_mismatch")
             repeated = await api.post("/api/retry", json=body)
             if repeated.status_code != 200 or repeated.json() != payload:

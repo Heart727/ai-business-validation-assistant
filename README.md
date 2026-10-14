@@ -6,15 +6,18 @@
 
 公开演示：[经营验证工作台](https://business-validation-lab.vercel.app/)（无需登录，可运行实时分析）。
 
-> **真实流程已验收。** 2026-10-12，10 份不同虚构资料通过本地 FastAPI API 调用真实 Dify/DeepSeek 与飞书，完成报告生成、资料快照读回、同一请求重试和执行记录保存。详见 [验收记录](docs/live-acceptance.md)；这 10 次不是模拟服务，也不是对生产网站连续发起的 10 次请求。外部服务的额度和可用性会影响后续运行。
+> **历史真实流程已验收（九字段版本）。** 2026-10-12，10 份不同虚构资料通过本地 FastAPI API 调用真实 Dify/DeepSeek 与飞书，完成报告生成、资料快照读回、同一请求重试和执行记录保存。详见 [验收记录](docs/live-acceptance.md)；这 10 次不是模拟服务，也不是对生产网站连续发起的 10 次请求。外部服务的额度和可用性会影响后续运行。
 
-选择模板后可修改九个经营字段，确认全部为虚构再提交。成功报告保存在飞书；浏览器可恢复最近一次报告，按天填写状态、观察指标和结论。保存日志不再次调用 AI。本地未启用实时模式时，仍提供明确标记的固定离线预览。
+选择模板后可修改十个经营字段（新增必填的「成功判定标准」），确认全部为虚构再提交。成功报告保存在飞书；浏览器可恢复最近一次报告，按天填写状态、观察指标和结论。保存日志不再次调用 AI。本地未启用实时模式时，仍提供明确标记的固定离线预览。
 
 2026-10-13 已用无登录浏览器在公开网站完成「编辑资料 → 实时分析 → 保存日志 → 刷新恢复」，详见 [线上验收证据](docs/production-browser-verification.json)。
 
 第一次使用请看 [保姆级教程](docs/user-guide.md)。求职介绍可用 [项目案例](docs/case-study.md) 和 [简历项目条目及面试脚本](docs/resume-project.md)。
 
 面试展示材料：[一页项目案例 PDF](https://business-validation-lab.vercel.app/static/demo/project-case.pdf) · [两分钟讲解与现场验证清单](docs/interview-quickstart.md)。
+
+改需求练习：[亲自验证教程](docs/change-request-exercise.md) · [受控模拟验收](docs/change-request-acceptance.json) · [本轮真实飞书与公开恢复证据](docs/change-request-live.json)。试单准备：[一个表格接 AI 的范围与验收模板](docs/paid-pilot-scope.md)。
+
 
 ## 90 秒操作演示
 

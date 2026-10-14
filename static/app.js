@@ -16,7 +16,7 @@ const DRAFT_FIELDS = {
   title: ["样例名称", 80], industry: ["所属行业", 60], offering: ["产品或服务", 300],
   target_customer: ["目标客群", 300], business_problem: ["经营问题", 600],
   current_metrics: ["当前指标", 600], budget_range: ["测试预算", 100],
-  goal: ["验证目标", 400], time_limit: ["验证时限", 100],
+  goal: ["验证目标", 400], success_criteria: ["成功判定标准", 300], time_limit: ["验证时限", 100],
 };
 const ERROR_COPY = {
   demo_disabled: "实时服务尚未开放，当前展示的是固定离线示例。",
@@ -93,7 +93,9 @@ function renderSelectedScenario(draftOverride = null) {
   byId("selected-industry").textContent = scenario.industry;
   byId("selected-title").textContent = scenario.title;
   const draft = draftOverride || state.pending?.draft || scenario;
-  for (const field of Object.keys(DRAFT_FIELDS)) byId(`draft-${field}`).value = draft[field];
+  for (const field of Object.keys(DRAFT_FIELDS)) {
+    byId(`draft-${field}`).value = typeof draft[field] === "string" ? draft[field] : "";
+  }
   byId("fictional-only").checked = state.pending?.draft?.fictional_only === true;
   clearIntakeFeedback();
   setIntakeLock();
@@ -138,9 +140,13 @@ function intakeError(message, fields = []) {
 }
 
 function isValidDraft(draft) {
-  return draft && typeof draft === "object" && draft.fictional_only === true
-    && Object.keys(draft).length === Object.keys(DRAFT_FIELDS).length + 1
-    && Object.entries(DRAFT_FIELDS).every(([field, [, limit]]) =>
+  if (!draft || typeof draft !== "object" || draft.fictional_only !== true) return false;
+  // Historical pending requests retain their original nine fields and nonce.
+  // New submissions still require every field through readDraft().
+  const fields = Object.entries(DRAFT_FIELDS).filter(([field]) =>
+    field !== "success_criteria" || Object.hasOwn(draft, field));
+  return Object.keys(draft).length === fields.length + 1
+    && fields.every(([field, [, limit]]) =>
       typeof draft[field] === "string" && draft[field].trim().length > 0 && draft[field].length <= limit)
     && draft.title.startsWith("虚构");
 }

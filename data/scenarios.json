@@ -9,7 +9,8 @@
     "current_metrics": "样例数据：工作日每日订单约 15–30 单，预订占比约 20%–35%",
     "budget_range": "样例预算：每周 300–600 元",
     "goal": "提高提前预订占比并减少剩余餐品",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天预订占比达到40%，剩余餐品较基线减少20%；预算不超原范围，样本不足则记为待验证"
   },
   {
     "id": "neighborhood-coffee",
@@ -21,7 +22,8 @@
     "current_metrics": "样例数据：下午每日交易约 8–18 单，全天约 45–70 单",
     "budget_range": "样例预算：每周 200–500 元",
     "goal": "验证下午组合套餐是否提升交易量",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：同口径下午交易量较基线提升20%，总支出不超过500元；样本不足则记为待验证"
   },
   {
     "id": "online-florist",
@@ -33,7 +35,8 @@
     "current_metrics": "样例数据：每日商品页访问约 70–120 次，订单约 3–7 单",
     "budget_range": "样例预算：每周 400–800 元",
     "goal": "验证商品页信息调整是否增加下单意向",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：同口径商品页下单比例较基线提升20%，预算不超原范围；样本不足则继续观察"
   },
   {
     "id": "personal-training",
@@ -45,7 +48,8 @@
     "current_metrics": "样例数据：每周预约约 12–20 人，到场约 7–13 人",
     "budget_range": "样例预算：每周 150–350 元",
     "goal": "提高体验课到场率",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天体验课到场率达到70%，预算不超原范围；样本不足则不宣称成功"
   },
   {
     "id": "pet-grooming",
@@ -57,7 +61,8 @@
     "current_metrics": "样例数据：工作日每日预约约 2–5 单，周末约 7–10 单",
     "budget_range": "样例预算：每周 100–300 元",
     "goal": "验证工作日预约提醒的效果",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天有效预约数较基线增加20%，预算不超原范围；样本不足则记为待验证"
   },
   {
     "id": "secondhand-clothing",
@@ -69,7 +74,8 @@
     "current_metrics": "样例数据：每周上新约 20–35 件，售出约 8–15 件",
     "budget_range": "样例预算：每周 100–250 元",
     "goal": "验证尺码与成色说明是否提升咨询量",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：同口径商品咨询转化率较基线提升10%，预算不超原范围；样本不足则记为待验证"
   },
   {
     "id": "tutoring-studio",
@@ -81,7 +87,8 @@
     "current_metrics": "样例数据：每周咨询约 15–25 次，试听预约约 4–8 次",
     "budget_range": "样例预算：每周 150–400 元",
     "goal": "提高咨询到试听预约的比例",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天有效体验报名数较基线增加20%，预算不超原范围；样本不足则不宣称成功"
   },
   {
     "id": "wedding-planner",
@@ -93,7 +100,8 @@
     "current_metrics": "样例数据：每月初询约 12–20 次，进入方案沟通约 4–7 次",
     "budget_range": "样例预算：每周 200–500 元",
     "goal": "验证标准化需求问卷能否缩短沟通时间",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天至少获得5次有效咨询，预算不超原范围；仅记录意向，不将其当成成交"
   },
   {
     "id": "commercial-cleaning",
@@ -105,7 +113,8 @@
     "current_metrics": "样例数据：每月报价约 10–18 份，后续回复约 4–8 份",
     "budget_range": "样例预算：每周 100–300 元",
     "goal": "验证报价说明与回访节奏是否增加回复",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天至少获得3次有效报价请求，预算不超原范围；仅记录询价，不将其当成成交"
   },
   {
     "id": "home-bakery",
@@ -117,6 +126,7 @@
     "current_metrics": "样例数据：每周订单约 10–18 单，提前三天预订约 3–7 单",
     "budget_range": "样例预算：每周 100–250 元",
     "goal": "提高提前预订比例",
-    "time_limit": "7 天验证"
+    "time_limit": "7 天验证",
+    "success_criteria": "虚构门槛：七天预订量较同口径基线增加20%，预算不超原范围；样本不足则记为待验证"
   }
 ]

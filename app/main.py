@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from app.config import Settings
-from app.schemas import AnalysisOutput, ExecutionRequest, PipelineResult, RecordAccess, RecordDetails, ScenarioDraft, ScenarioRequest
+from app.schemas import AnalysisOutput, ExecutionRequest, PipelineResult, RecordAccess, RecordDetails, ScenarioDraft, ScenarioRequest, LegacyScenarioDraft, RetryScenarioRequest
 from app.services.pipeline import PipelineError, PipelineService
 from app.services.scenarios import ScenarioCatalog, UnknownScenario
 from app.services.tracking import TrackingService
@@ -94,9 +94,11 @@ def create_app(
             if body.draft is None and body.request_token is None:
                 result = await pipeline.submit(body.scenario_id, str(body.request_id))
             else:
+                compatibility = isinstance(body.draft, LegacyScenarioDraft) and not isinstance(body.draft, ScenarioDraft)
                 result = await pipeline.submit(
                     body.scenario_id, str(body.request_id), body.draft,
                     str(body.request_token) if body.request_token else None,
+                    **({"allow_create": False} if compatibility else {}),
                 )
             if result.status == "completed" and body.request_token is not None:
                 result = result.model_copy(update={"access_token": tracking.issue_token(str(body.request_id))})
@@ -111,7 +113,7 @@ def create_app(
         return await submit(body)
 
     @app.post("/api/retry", response_model=PipelineResult)
-    async def retry(body: ScenarioRequest) -> PipelineResult:
+    async def retry(body: RetryScenarioRequest) -> PipelineResult:
         return await submit(body)
 
     async def record_operation(body: RecordAccess, execution=None):

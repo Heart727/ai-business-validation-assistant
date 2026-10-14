@@ -5,7 +5,9 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
-const scenarios = JSON.parse(fs.readFileSync(path.join(root, "data/scenarios.json"), "utf8"));
+// API fixtures include the new field independently of the catalog migration.
+const scenarios = JSON.parse(fs.readFileSync(path.join(root, "data/scenarios.json"), "utf8"))
+  .map((scenario) => ({ ...scenario, success_criteria: scenario.success_criteria ?? "七天复购占比达25%" }));
 const analysis = JSON.parse(fs.readFileSync(path.join(root, "data/example_analysis.json"), "utf8")).analysis;
 const requestId = "0e9dbe92-0fc0-4cc2-9b5e-d7baccc04853";
 const requestToken = "019dbe92-0fc0-4cc2-9b5e-d7baccc04853";
@@ -29,6 +31,8 @@ class Element {
     this._text = "";
   }
   set textContent(value) { this._text = String(value); this.children = []; }
+  set value(value) { this._value = String(value); }
+  get value() { return this._value; }
   get textContent() { return this._text + this.children.map((child) => child.textContent).join(""); }
   get childElementCount() { return this.children.length; }
   append(...children) { this.children.push(...children); }
@@ -49,7 +53,7 @@ function storage(seed = {}) {
     removeItem: (key) => items.delete(key) };
 }
 
-async function boot({ session = {}, local = {}, route = () => null, live = true } = {}) {
+async function boot({ session = {}, local = {}, route = () => null, live = true, catalog = scenarios } = {}) {
   const elements = new Map();
   const html = fs.readFileSync(path.join(root, "static/index.html"), "utf8");
   for (const match of html.matchAll(/<([a-z][\w-]*)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
@@ -57,6 +61,8 @@ async function boot({ session = {}, local = {}, route = () => null, live = true 
     element.id = match[3];
     element.hidden = /\bhidden\b/.test(match[2]);
     element.disabled = /\bdisabled\b/.test(match[2]);
+    element.required = /\brequired\b/.test(match[2]);
+    for (const attribute of match[2].matchAll(/\b([\w-]+)="([^"]*)"/g)) element.setAttribute(attribute[1], attribute[2]);
     elements.set(element.id, element);
   }
   function find(id, element) {
@@ -90,7 +96,7 @@ async function boot({ session = {}, local = {}, route = () => null, live = true 
       const submission = requests.findLast((item) => ["/api/analyze", "/api/retry"].includes(item.url));
       const submittedScenario = submission?.body?.draft ? { id: submission.body.scenario_id, ...submission.body.draft } : scenarios[0];
       const payload = url === "/api/health" ? { live_demo_enabled: live }
-        : url === "/api/scenarios" ? scenarios : url === "/api/preview" ? analysis
+        : url === "/api/scenarios" ? catalog : url === "/api/preview" ? analysis
         : url === "/api/record" ? record([], submittedScenario) : {};
       return { ok: true, status: 200, json: async () => payload };
     },
@@ -467,7 +473,7 @@ test("copied bearer recovery code contains only the report ID and record token a
   assert.equal(JSON.parse(destination.localStorage.getItem(latestKey)).accessToken, accessToken);
 });
 
-test("restored snapshot shows nine known saved fields and excludes private data despite intake changes", async () => {
+test("restored snapshot shows only known saved fields including success criteria despite intake changes", async () => {
   const scenario = { ...scenarios[0], current_metrics: "虚构读回：每天 23 单", budget_range: "虚构读回：每周 250 元",
     request_token: requestToken, private_nonce: "private-snapshot-nonce", request_token_digest: "private-snapshot-digest",
     access_token: accessToken, accessToken };
@@ -480,7 +486,8 @@ test("restored snapshot shows nine known saved fields and excludes private data 
     ["样例名称", scenarios[0].title], ["所属行业", scenarios[0].industry],
     ["产品或服务", scenarios[0].offering], ["目标客群", scenarios[0].target_customer],
     ["经营问题", scenarios[0].business_problem], ["当前指标", "虚构读回：每天 23 单"],
-    ["测试预算", "虚构读回：每周 250 元"], ["验证目标", scenarios[0].goal], ["验证时限", scenarios[0].time_limit],
+    ["测试预算", "虚构读回：每周 250 元"], ["验证目标", scenarios[0].goal],
+    ["成功判定标准", scenarios[0].success_criteria], ["验证时限", scenarios[0].time_limit],
   ]);
   for (const secret of [requestToken, accessToken, "private-snapshot-nonce", "private-snapshot-digest", scenarios[0].id]) {
     assert.equal(snapshot.textContent.includes(secret), false);
@@ -587,4 +594,121 @@ test("an old retry read finishing after a new analysis cannot lock or replace th
     assert.match(app.byId("tracker-progress").textContent, /0\s*\/\s*7/);
     assert.equal(app.requests.filter((item) => item.url === "/api/record").length, 1);
   }
+});
+
+test("new analyses require nonblank success criteria and enforce the 300-character bound", async () => {
+  for (const value of ["", "   \n\t", "甲".repeat(301)]) {
+    const app = await boot();
+    const input = app.byId("draft-success_criteria");
+    assert.ok(input, "success criteria must be an editable required intake field");
+    assert.equal(input.required, true);
+    assert.equal(input.attributes.maxlength, "300");
+    input.value = value;
+    app.byId("fictional-only").checked = true;
+    await app.byId("run-button").fire("click");
+    assert.equal(app.requests.some((item) => item.url === "/api/analyze"), false);
+    assert.equal(app.sessionStorage.getItem(pendingKey), null);
+    assert.equal(input.attributes["aria-invalid"], "true");
+    assert.match(app.byId("intake-feedback").textContent, /成功判定标准/);
+  }
+});
+
+test("missing or null template criteria render blank instead of undefined and block new submissions", async () => {
+  for (const value of [undefined, null]) {
+    const scenario = { ...scenarios[0] };
+    if (value === undefined) delete scenario.success_criteria;
+    else scenario.success_criteria = value;
+    const app = await boot({ catalog: [scenario] });
+    assert.ok(app.byId("draft-success_criteria"));
+    assert.equal(app.byId("draft-success_criteria").value, "");
+    app.byId("fictional-only").checked = true;
+    await app.byId("run-button").fire("click");
+    assert.equal(app.requests.some((item) => item.url === "/api/analyze"), false);
+    assert.equal(app.allText().includes("undefined"), false);
+  }
+});
+
+test("success criteria at 300 characters reach the request and the submitted snapshot", async () => {
+  const criteria = "甲".repeat(300);
+  const app = await boot({ route: (url) => url === "/api/analyze" ? completed : null });
+  assert.ok(app.byId("draft-success_criteria"));
+  app.byId("draft-success_criteria").value = criteria;
+  app.byId("fictional-only").checked = true;
+  await app.byId("run-button").fire("click");
+  assert.equal(app.requests.find((item) => item.url === "/api/analyze").body.draft.success_criteria, criteria);
+  const pair = app.byId("saved-snapshot-content").children.find((item) => item.children[0].textContent === "成功判定标准");
+  assert.ok(pair, "saved snapshot must include the success criterion");
+  assert.equal(pair.children[1].textContent, criteria);
+  assert.equal(app.byId("saved-snapshot-source").textContent, "本次提交资料（已确认保存）");
+  assert.equal(app.requests.some((item) => item.url === "/api/record"), false);
+});
+
+test("429 freezes new success criteria and reload retries the identical snapshot and nonce", async () => {
+  const app = await boot({ route: (url) => url === "/api/analyze" ? { status: 429, payload: {} } : null });
+  assert.ok(app.byId("draft-success_criteria"));
+  app.byId("draft-success_criteria").value = "  七天复购占比达25%  ";
+  app.byId("fictional-only").checked = true;
+  await app.byId("run-button").fire("click");
+  const sent = app.requests.find((item) => item.url === "/api/analyze").body;
+  const stored = app.sessionStorage.getItem(pendingKey);
+  assert.equal(sent.draft.success_criteria, "七天复购占比达25%");
+  assert.equal(sent.request_token, requestToken);
+  assert.equal(app.byId("intake-fields").disabled, true);
+  assert.equal(app.eval("Object.isFrozen(state.pending.draft)"), true);
+  app.byId("draft-success_criteria").value = "虚构：途中篡改";
+  const restored = await boot({ session: { [pendingKey]: stored }, route: (url) => url === "/api/retry" ? { status: 429, payload: {} } : null });
+  assert.equal(restored.byId("draft-success_criteria").value, "七天复购占比达25%");
+  restored.byId("draft-success_criteria").value = "虚构：刷新后篡改";
+  await restored.byId("retry-button").fire("click");
+  assert.deepEqual(restored.requests.find((item) => item.url === "/api/retry").body, sent);
+  assert.equal(restored.sessionStorage.getItem(pendingKey), stored);
+  assert.equal(restored.byId("intake-fields").disabled, true);
+});
+
+test("historical nine-field pending snapshots retry unchanged without adding criteria or losing the nonce", async () => {
+  const draft = { ...scenarios[0], fictional_only: true };
+  delete draft.id;
+  delete draft.success_criteria;
+  const stored = JSON.stringify({ scenarioId: scenarios[0].id, requestId, requestToken, draft });
+  const app = await boot({ session: { [pendingKey]: stored }, route: (url) => url === "/api/retry" ? { status: 429, payload: {} } : null });
+  assert.equal(app.eval("state.pending.requestToken"), requestToken);
+  assert.ok(app.byId("draft-success_criteria"));
+  assert.equal(app.byId("draft-success_criteria").value, "");
+  assert.equal(app.byId("intake-fields").disabled, true);
+  assert.equal(app.eval("Object.isFrozen(state.pending.draft)"), true);
+  app.byId("draft-success_criteria").value = "不得补入旧快照的标准";
+  await app.byId("retry-button").fire("click");
+  assert.deepEqual(app.requests.find((item) => item.url === "/api/retry").body, { scenario_id: scenarios[0].id, request_id: requestId, request_token: requestToken, draft });
+  assert.equal(app.eval("Object.hasOwn(state.pending.draft, 'success_criteria')"), false);
+  assert.equal(app.sessionStorage.getItem(pendingKey), stored);
+  assert.equal(app.allText().includes("undefined"), false);
+});
+
+test("legacy missing or null saved criteria are labeled as not filled without borrowing template data", async () => {
+  for (const value of [undefined, null]) {
+    const scenario = { ...scenarios[0] };
+    if (value === undefined) delete scenario.success_criteria;
+    else scenario.success_criteria = value;
+    const app = await boot({ local: { [latestKey]: saved }, route: (url) => url === "/api/record" ? { status: 200, payload: record([], scenario) } : null });
+    const content = app.byId("saved-snapshot-content");
+    const pair = content.children.find((item) => item.children[0].textContent === "成功判定标准");
+    assert.ok(pair, "old snapshots must explain the absent success criterion");
+    assert.equal(pair.children[1].textContent, "旧版未填写");
+    app.eval(`selectScenario(${JSON.stringify(scenarios[1].id)})`);
+    assert.equal(pair.children[1].textContent, "旧版未填写");
+    assert.equal(content.textContent.includes("undefined"), false);
+    assert.equal(content.textContent.includes(requestToken), false);
+    assert.equal(content.textContent.includes(accessToken), false);
+  }
+});
+
+test("server validation names success criteria and unlocks the field for correction", async () => {
+  const app = await boot({ route: (url) => url === "/api/analyze" ? { status: 422, payload: { detail: { code: "invalid_input", fields: ["body.draft.success_criteria"] } } } : null });
+  assert.ok(app.byId("draft-success_criteria"));
+  app.byId("fictional-only").checked = true;
+  await app.byId("run-button").fire("click");
+  assert.match(app.byId("status-message").textContent, /成功判定标准/);
+  assert.equal(app.byId("draft-success_criteria").attributes["aria-invalid"], "true");
+  assert.equal(app.byId("intake-fields").disabled, false);
+  assert.equal(app.sessionStorage.getItem(pendingKey), null);
 });
