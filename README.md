@@ -16,7 +16,7 @@
 
 面试展示材料：[一页项目案例 PDF](https://business-validation-lab.vercel.app/static/demo/project-case.pdf) · [两分钟讲解与现场验证清单](docs/interview-quickstart.md)。
 
-改需求练习：[亲自验证教程](docs/change-request-exercise.md) · [受控模拟验收](docs/change-request-acceptance.json) · [本轮真实飞书与公开恢复证据](docs/change-request-live.json)。试单准备：[一个表格接 AI 的范围与验收模板](docs/paid-pilot-scope.md)。
+改需求练习：[亲自验证教程](docs/change-request-exercise.md) · [受控模拟验收](docs/change-request-acceptance.json) · [本轮真实飞书与公开恢复证据](docs/change-request-live.json) · [统计口径复核与七个计算样例](docs/metric-review.md)。试单准备：[询盘消息草稿](docs/paid-pilot-inquiry.md) · [一个表格接 AI 的范围与验收模板](docs/paid-pilot-scope.md)。
 
 
 ## 90 秒操作演示

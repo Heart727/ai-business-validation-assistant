@@ -1,0 +1,137 @@
+{
+  "verified_date": "2026-10-14",
+  "mode": "anonymous_public_browser_real_workflow_then_real_record_readback",
+  "previous_request_id": "dd73628f-78d8-4d7a-8826-018fdcd5ad45",
+  "request_id": "2eff10f3-ded3-44db-bd6c-aa1e05fb81f5",
+  "new_request_id": true,
+  "input": {
+    "title": "虚构口径复核：第7天单日复购杯数占比",
+    "industry": "咖啡零售",
+    "offering": "现制咖啡与简餐",
+    "target_customer": "附近通勤者与社区居民",
+    "business_problem": "下午时段售出杯数偏低，希望用低成本提醒验证复购杯数占比；经营结论仅依据真实记录的杯数，本次全部为虚构资料。",
+    "current_metrics": "虚构基线：每天总销售60杯，其中曾购买过的顾客本次购买12杯；按杯数统计复购杯数占比12/60=20%。复购杯数是重复购买顾客购买的杯数，不是人数。缺少第7天实测数据。",
+    "budget_range": "虚构预算：7天累计支出不超过200元",
+    "goal": "验证第7天单日复购杯数占比是否达到25%；不使用人数占比或七天累计占比替代，也不宣称已达标。",
+    "time_limit": "7天；第7天单日指标作最终判断",
+    "success_criteria": "第7天单日复购杯数÷第7天单日总销售杯数≥25%，分子分母都按杯数，不按人数，不用七天累计占比替代；七天累计支出≤200元。第7天总销售至少40杯且记录完整才可判定；总销售为0、少于40杯或记录不完整时记为待验证，不宣称达标。每天记录当日总杯数、复购杯数、当日支出；第7天按上述公式及七天累计支出判断。",
+    "fictional_only": true
+  },
+  "analysis": {
+    "executive_summary": "当前下午时段售出杯数偏低，需用低成本提醒验证第7天单日复购杯数占比是否达到25%。本次为虚构口径复核，所有经营结论仅依据真实记录的杯数，当前缺少第7天实测数据。",
+    "observations": [
+      "证据：输入资料显示虚构基线为每天总销售60杯，其中曾购买过的顾客本次购买12杯，按杯数统计复购杯数占比为12/60=20%。",
+      "推断：若第7天单日复购杯数占比达到25%，则假设下午时段提醒可能提升复购杯数，但该推断仅为假设，需以第7天实测杯数验证。",
+      "缺失信息：第7天单日总销售杯数、第7天单日复购杯数、第7天单日支出及七天累计支出均未提供，需在测试期间逐日采集。"
+    ],
+    "risks": [
+      "样本量小：单日总销售至少40杯才可判定，若第7天销售不足40杯或记录不完整，结果只能记为待验证。",
+      "成本限制：七天累计支出不超过200元，可能限制提醒触达范围或频次，影响复购行为观察。",
+      "时间限制：仅以第7天单日指标作最终判断，单日波动可能导致误判，无法反映稳定复购趋势。"
+    ],
+    "seven_day_actions": [
+      {
+        "day": 1,
+        "action": "记录当日总销售杯数、复购杯数、当日支出，并开始执行低成本提醒。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若记录完整则继续；若记录缺失则当日标记为待验证并继续采集。"
+      },
+      {
+        "day": 2,
+        "action": "继续执行提醒并记录当日总销售杯数、复购杯数、当日支出。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若累计支出未超过200元且记录完整则继续；若支出超限则停止新增提醒。"
+      },
+      {
+        "day": 3,
+        "action": "继续执行提醒并记录当日总销售杯数、复购杯数、当日支出。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若累计支出未超过200元且记录完整则继续；若支出超限则停止新增提醒。"
+      },
+      {
+        "day": 4,
+        "action": "继续执行提醒并记录当日总销售杯数、复购杯数、当日支出。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若累计支出未超过200元且记录完整则继续；若支出超限则停止新增提醒。"
+      },
+      {
+        "day": 5,
+        "action": "继续执行提醒并记录当日总销售杯数、复购杯数、当日支出。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若累计支出未超过200元且记录完整则继续；若支出超限则停止新增提醒。"
+      },
+      {
+        "day": 6,
+        "action": "继续执行提醒并记录当日总销售杯数、复购杯数、当日支出。",
+        "metric": "当日总销售杯数、当日复购杯数、当日支出",
+        "decision_rule": "若累计支出未超过200元且记录完整则继续；若支出超限则停止新增提醒。"
+      },
+      {
+        "day": 7,
+        "action": "执行提醒并记录第7天单日总销售杯数、复购杯数、当日支出，计算第7天单日复购杯数占比及七天累计支出。",
+        "metric": "第7天单日复购杯数÷第7天单日总销售杯数；七天累计支出",
+        "decision_rule": "若第7天总销售至少40杯且记录完整，且复购杯数占比≥25%且七天累计支出≤200元，则判定达标并考虑继续；若占比<25%或支出超限则调整或停止；若总销售为0、少于40杯或记录不完整则记为待验证，不宣称达标。"
+      }
+    ]
+  },
+  "public_posts": [
+    {
+      "path": "/api/analyze",
+      "status": 200
+    },
+    {
+      "path": "/api/record",
+      "status": 200
+    }
+  ],
+  "criterion_in_readback": true,
+  "units_in_readback": true,
+  "page_errors": [],
+  "semantic_review": {
+    "status": "metric_definition_consistent_for_this_sample",
+    "reviewer": "Codex（AI辅助复核，非用户亲自验收）",
+    "method": "阅读完整原始摘要、观察、风险与七天 action/metric/decision_rule，对照输入定义；不以出现25%字符串代替内容检查。",
+    "checks": [
+      {
+        "item": "units",
+        "accepted": true,
+        "evidence": "第1至第7天采集总销售杯数、复购杯数和当日支出；无人数作为占比分子。"
+      },
+      {
+        "item": "period_and_formula",
+        "accepted": true,
+        "evidence": "第7天 metric 使用单日复购杯数÷单日总销售杯数，七天累计仅用于支出。"
+      },
+      {
+        "item": "threshold_and_budget",
+        "accepted": true,
+        "evidence": "第7天 decision_rule 同时要求占比≥25%和七天累计支出≤200元。"
+      },
+      {
+        "item": "insufficient_data",
+        "accepted": true,
+        "evidence": "第7天为0、少于40杯或记录不完整，记为待验证，不宣称达标。"
+      },
+      {
+        "item": "no_invented_result",
+        "accepted": true,
+        "evidence": "摘要和缺失信息说明第7天未实测；当前12/60=20%仅为虚构基线。"
+      }
+    ],
+    "limitations": "仅针对这份输出核对指标口径；不保证模型所有输出正确，不表示统计显著性、真实经营达标或因果改善。提醒的具体执行内容仍需确认。"
+  },
+  "note": "仅虚构输入；上一份报告原样保留。没有七天经营实测数据，报告完成不代表经营达标。未关闭或绕过生产限流。",
+  "record_id": "reczz28NHDjEjdFH",
+  "single_record_lookup_passed": true,
+  "physical_status": "completed",
+  "separate_criterion_column_matches": true,
+  "full_snapshot_matches": true,
+  "saved_report_matches_model_output": true,
+  "original_report_unchanged": true,
+  "original_report_reference_commit": "161b2b66ba119e83ee2442ed3fa8f143fd28971d",
+  "original_report_sha256": "bb335d17fbf2f42419dc4987a91cef23aed32f28a97218d38e8a092fcced4eb7",
+  "new_separate_record": true,
+  "verification_observations": [
+    "本地独立飞书只读检查第一次遇到RequestError（未取得上游响应），相同只读检查再次成功；未改应用超时、未重新生成AI报告。"
+  ]
+}

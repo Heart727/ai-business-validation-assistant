@@ -1,0 +1,83 @@
+{
+  "verified_date": "2026-10-14",
+  "mode": "offline_exact_arithmetic_on_fictional_examples",
+  "criterion": "第7天单日复购杯数/当日总销售杯数>=25%；七天累计支出<=200元；第7天至少40杯且记录完整。",
+  "minimum_sample_note": "40杯是本次虚构验收约定，不表示具有统计显著性。",
+  "cases": [
+    {
+      "name": "占比与预算刚好达标",
+      "total_cups": 100,
+      "repurchase_cups": 25,
+      "cost_yuan": 200,
+      "records_complete": true,
+      "expected": "meets_criteria",
+      "day7_ratio_percent": 25.0,
+      "actual": "meets_criteria"
+    },
+    {
+      "name": "占比未达标",
+      "total_cups": 100,
+      "repurchase_cups": 24,
+      "cost_yuan": 200,
+      "records_complete": true,
+      "expected": "does_not_meet_criteria",
+      "day7_ratio_percent": 24.0,
+      "actual": "does_not_meet_criteria"
+    },
+    {
+      "name": "累计支出超预算",
+      "total_cups": 100,
+      "repurchase_cups": 25,
+      "cost_yuan": 201,
+      "records_complete": true,
+      "expected": "does_not_meet_criteria",
+      "day7_ratio_percent": 25.0,
+      "actual": "does_not_meet_criteria"
+    },
+    {
+      "name": "总杯数为零",
+      "total_cups": 0,
+      "repurchase_cups": 0,
+      "cost_yuan": 0,
+      "records_complete": true,
+      "expected": "pending_verification",
+      "day7_ratio_percent": null,
+      "actual": "pending_verification"
+    },
+    {
+      "name": "样本少于40杯",
+      "total_cups": 30,
+      "repurchase_cups": 10,
+      "cost_yuan": 50,
+      "records_complete": true,
+      "expected": "pending_verification",
+      "day7_ratio_percent": 33.333333333333336,
+      "actual": "pending_verification"
+    },
+    {
+      "name": "记录不完整",
+      "total_cups": 100,
+      "repurchase_cups": 25,
+      "cost_yuan": 100,
+      "records_complete": false,
+      "expected": "pending_verification",
+      "day7_ratio_percent": 25.0,
+      "actual": "pending_verification"
+    },
+    {
+      "name": "七天累计达标不能替代第7天单日",
+      "total_cups": 40,
+      "repurchase_cups": 8,
+      "cost_yuan": 200,
+      "records_complete": true,
+      "preceding_six_day_total_cups": 560,
+      "preceding_six_day_repurchase_cups": 172,
+      "expected": "does_not_meet_criteria",
+      "day7_ratio_percent": 20.0,
+      "actual": "does_not_meet_criteria",
+      "seven_day_cumulative_ratio_percent": 30.0
+    }
+  ],
+  "passed": 7,
+  "scope": "只核对公式和判断边界；不调用AI、不写飞书，不代替真实经营数据或报告语义审查。"
+}
