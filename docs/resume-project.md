@@ -4,6 +4,8 @@
 
 项目代码：[GitHub 仓库](https://github.com/Heart727/business-validation-lab)。公开体验：[经营验证工作台](https://business-validation-lab.vercel.app)。使用说明：[新手指南](user-guide.md)。项目背景与已有证据：[案例说明](case-study.md)。
 
+短版准备材料：[两分钟项目讲解与现场验证](interview-quickstart.md) · [一页项目案例 PDF](https://business-validation-lab.vercel.app/static/demo/project-case.pdf)。
+
 项目是个人求职作品，使用虚构资料和专用飞书 DEMO 表。2026-10-12，10 份不同资料通过本地 FastAPI API 调用真实 Dify/DeepSeek 和飞书，完整验收结果见 [记录](live-acceptance.md)。模拟测试、真实接口验收和真实经营成果分别表述，不将演示称为雇主任职或商业客户交付。
 
 ## 一、可复制到简历的项目条目

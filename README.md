@@ -14,6 +14,8 @@
 
 第一次使用请看 [保姆级教程](docs/user-guide.md)。求职介绍可用 [项目案例](docs/case-study.md) 和 [简历项目条目及面试脚本](docs/resume-project.md)。
 
+面试展示材料：[一页项目案例 PDF](https://business-validation-lab.vercel.app/static/demo/project-case.pdf) · [两分钟讲解与现场验证清单](docs/interview-quickstart.md)。
+
 ## 90 秒操作演示
 
 [![90 秒项目演示：填写虚构资料、查看报告、保存并恢复日志](static/demo/demo-poster.png)](https://business-validation-lab.vercel.app/static/demo/index.html)
